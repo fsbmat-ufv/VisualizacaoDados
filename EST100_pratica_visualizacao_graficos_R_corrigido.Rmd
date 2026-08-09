@@ -1,0 +1,904 @@
+---
+title: "Aula prática: visualização de dados com R e ggplot2"
+subtitle: "EST 100 — Estatística Descritiva e Exploratória"
+author: "Curso de Ciência de Dados — UFV"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 8.5,
+  fig.height = 4.8,
+  out.width = "95%"
+)
+```
+
+<style>
+body { font-size: 16px; line-height: 1.55; }
+h1, h2, h3 { font-weight: 700; }
+.objetivos, .conceito, .atividade, .alerta, .professor {
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 18px 0;
+}
+.objetivos { background: #eef7ff; border-left: 6px solid #2c7fb8; }
+.conceito  { background: #f4f7f2; border-left: 6px solid #5b8c5a; }
+.atividade { background: #fff7e6; border-left: 6px solid #e69f00; }
+.alerta    { background: #fff0f0; border-left: 6px solid #cc4c4c; }
+.professor { background: #f5f0ff; border-left: 6px solid #7b61ff; }
+code { font-size: 95%; }
+</style>
+
+```{r pacotes}
+library(tidyverse)
+library(scales)
+
+theme_set(theme_minimal(base_size = 13))
+```
+
+::: {.objetivos}
+**Objetivos da prática.** Ao final desta aula, espera-se que o estudante seja capaz de:
+
+1. reconhecer quais gráficos são adequados para variáveis qualitativas e quantitativas;
+2. construir gráficos de barras, setores, histogramas, densidades, boxplots e gráficos comparativos usando `ggplot2`;
+3. interpretar centro, dispersão, caudas, assimetria e possíveis valores atípicos;
+4. perceber que estatísticas-resumo podem esconder padrões importantes nos dados;
+5. produzir uma pequena análise exploratória reprodutível em RMarkdown.
+:::
+
+::: {.professor}
+**Nota ao professor.** Esta prática foi pensada para acompanhar uma aula expositiva sobre gráficos estatísticos. A estrutura é inspirada na ideia de apresentar primeiro a “paisagem” de recursos gráficos do R e, depois, conduzir os estudantes pela gramática do `ggplot2`: dados, mapeamento estético, geometria, estatística, facetas, coordenadas e tema.
+:::
+
+# Por que visualizar dados?
+
+A análise exploratória de dados não começa apenas com fórmulas. Ela começa com uma pergunta:
+
+> **O que os dados estão tentando nos mostrar?**
+
+Tabelas e medidas-resumo são fundamentais, mas gráficos permitem enxergar padrões que podem passar despercebidos: grupos raros, assimetrias, caudas longas, valores extremos, mistura de subpopulações e possíveis erros de digitação.
+
+::: {.conceito}
+**Ideia central.** Um gráfico estatístico deve transformar dados em evidência visual. Antes de escolher o gráfico, precisamos saber:
+
+- qual é o tipo da variável;
+- qual pergunta queremos responder;
+- se queremos comparar categorias, visualizar uma distribuição ou investigar associação.
+:::
+
+# Uma pequena paisagem de recursos gráficos no R
+
+O R possui vários caminhos para criar gráficos. Nesta prática, usaremos principalmente o `ggplot2`, mas é importante saber que ele faz parte de uma paisagem maior.
+
+```{r paisagem-graficos, echo=FALSE}
+tibble::tribble(
+  ~Recurso, ~Caracteristica, ~Quando_aparece_com_frequencia,
+  "`graphics`", "Sistema gráfico básico do R.", "Gráficos rápidos, funções clássicas, saídas de modelos.",
+  "`lattice`", "Sistema gráfico com forte suporte a painéis.", "Visualizações condicionais e gráficos multipainel.",
+  "`ggplot2`", "Implementação da Gramática dos Gráficos.", "Visualização exploratória, publicação e relatórios.",
+  "`plotly`, `leaflet`, `highcharter`", "Gráficos interativos.", "Dashboards, mapas e visualizações web."
+) |>
+  knitr::kable()
+```
+
+::: {.conceito}
+Nesta aula, a pergunta não será “qual pacote faz o gráfico mais bonito?”, mas sim: **qual gráfico ajuda a responder melhor à pergunta estatística?**
+:::
+
+# A gramática básica do `ggplot2`
+
+O `ggplot2` funciona por camadas. Em vez de pedir ao R apenas “faça um gráfico”, dizemos:
+
+1. quais são os **dados**;
+2. quais variáveis serão mapeadas em **estéticas**;
+3. qual **geometria** será usada;
+4. se haverá algum resumo estatístico;
+5. se o gráfico será dividido em **facetas**;
+6. como serão as escalas, coordenadas, rótulos e tema.
+
+```{r exemplo-camadas}
+ggplot(data = mpg, aes(x = class)) +
+  geom_bar() +
+  labs(
+    title = "Exemplo inicial: contagem de veículos por classe",
+    x = "Classe do veículo",
+    y = "Frequência"
+  )
+```
+
+::: {.atividade}
+**Atividade rápida.** No código anterior, identifique:
+
+- a base de dados;
+- a variável visualizada;
+- a geometria usada;
+- o tipo da variável `class`.
+:::
+
+# Base de dados da prática
+
+Para tornar a prática próxima do contexto da EST 100, vamos criar uma base fictícia de estudantes. Ela simula informações que poderiam aparecer em um questionário de diagnóstico da turma.
+
+```{r cria-base}
+set.seed(150)
+
+n <- 240
+
+dados_est100 <- tibble(
+  estudante = 1:n,
+  curso = sample(
+    c("Ciência de Dados", "Computação", "Engenharia", "Economia", "Outros"),
+    size = n,
+    replace = TRUE,
+    prob = c(0.38, 0.20, 0.18, 0.14, 0.10)
+  ),
+  periodo = sample(1:4, size = n, replace = TRUE, prob = c(0.55, 0.25, 0.13, 0.07)),
+  facilidade_exatas = sample(
+    c("Baixa", "Média", "Alta"),
+    size = n,
+    replace = TRUE,
+    prob = c(0.22, 0.50, 0.28)
+  ),
+  habito_estudo = sample(
+    c("Estuda antecipadamente", "Estuda na véspera", "Mistura as duas estratégias"),
+    size = n,
+    replace = TRUE,
+    prob = c(0.30, 0.28, 0.42)
+  ),
+  horas_estudo = round(pmax(0, rlnorm(n, meanlog = log(5), sdlog = 0.55)), 1),
+  sono = round(pmin(10, pmax(3.5, rnorm(n, mean = 6.7, sd = 1.1))), 1),
+  tempo_transporte = round(pmax(2, rgamma(n, shape = 2.2, scale = 12)), 0),
+  expectativa_salarial = round(rlnorm(n, meanlog = log(4500), sdlog = 0.65), -2)
+) |>
+  mutate(
+    facilidade_exatas = factor(
+      facilidade_exatas,
+      levels = c("Baixa", "Média", "Alta"),
+      ordered = TRUE
+    ),
+    nota_simulada = 55 +
+      3.5 * sqrt(horas_estudo) +
+      2.0 * (sono - 6.5) +
+      case_when(
+        facilidade_exatas == "Alta" ~ 8,
+        facilidade_exatas == "Média" ~ 3,
+        TRUE ~ 0
+      ) +
+      rnorm(n, mean = 0, sd = 9),
+    nota_simulada = round(pmin(100, pmax(0, nota_simulada)), 1)
+  )
+
+glimpse(dados_est100)
+```
+
+::: {.alerta}
+A base acima é **simulada**. Em uma aula real, ela pode ser substituída por uma base coletada com a turma, desde que sejam respeitados princípios de consentimento, privacidade e uso responsável dos dados.
+:::
+
+# Tipos de variáveis e escolha do gráfico
+
+```{r tabela-escolha-grafico, echo=FALSE}
+tibble::tribble(
+  ~Tipo_de_variavel, ~Pergunta, ~Graficos_adequados,
+  "Qualitativa nominal", "Quais categorias são mais frequentes?", "Barras, barras ordenadas, setores com cautela.",
+  "Qualitativa ordinal", "Como as respostas se distribuem em uma escala ordenada?", "Barras ordenadas, barras empilhadas.",
+  "Quantitativa discreta", "Quais valores aparecem mais?", "Barras, pontos, histograma com cuidado.",
+  "Quantitativa contínua", "Qual é a forma da distribuição?", "Histograma, densidade, boxplot, violin plot, ECDF.",
+  "Duas variáveis qualitativas", "As proporções mudam entre grupos?", "Barras agrupadas, barras empilhadas, mosaico.",
+  "Quantitativa por grupo", "A distribuição muda entre categorias?", "Boxplot, violin plot, jitter, histogramas facetados.",
+  "Duas quantitativas", "Há associação entre as variáveis?", "Dispersão, suavização, correlação visual."
+) |>
+  knitr::kable()
+```
+
+# Variáveis qualitativas
+
+Variáveis qualitativas representam categorias. Em geral, o primeiro passo é contar frequências.
+
+## Tabela de frequências
+
+```{r tabela-frequencia-curso}
+tab_curso <- dados_est100 |>
+  count(curso, sort = TRUE) |>
+  mutate(
+    prop = n / sum(n),
+    rotulo = paste0(n, " (", percent(prop, accuracy = 0.1), ")")
+  )
+
+tab_curso |>
+  knitr::kable()
+```
+
+## Gráfico de barras simples
+
+```{r grafico-barras-curso}
+ggplot(tab_curso, aes(x = fct_reorder(curso, n), y = n)) +
+  geom_col() +
+  geom_text(aes(label = rotulo), hjust = -0.05) +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.18))) +
+  labs(
+    title = "Distribuição dos estudantes por curso",
+    subtitle = "Barras ordenadas facilitam a comparação entre categorias",
+    x = "Curso",
+    y = "Frequência"
+  )
+```
+
+::: {.conceito}
+**Regra prática.** Para variáveis qualitativas, barras costumam ser mais eficientes do que setores quando o objetivo é comparar categorias. Barras permitem comparar comprimentos em uma escala comum.
+:::
+
+## Barras para variável ordinal
+
+```{r barras-ordinal}
+tab_facilidade <- dados_est100 |>
+  count(facilidade_exatas) |>
+  mutate(prop = n / sum(n))
+
+ggplot(tab_facilidade, aes(x = facilidade_exatas, y = prop)) +
+  geom_col() +
+  geom_text(aes(label = percent(prop, accuracy = 0.1)), vjust = -0.4) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, max(tab_facilidade$prop) * 1.18)) +
+  labs(
+    title = "Facilidade declarada com disciplinas de Exatas",
+    x = "Facilidade declarada",
+    y = "Percentual de estudantes"
+  )
+```
+
+::: {.atividade}
+**Atividade 1.** Troque a variável `facilidade_exatas` por `habito_estudo` e construa um gráfico de barras.
+
+Depois responda:
+
+1. qual categoria é mais frequente?
+2. a ordem das categorias ajuda ou atrapalha a leitura?
+3. faria sentido ordenar pela frequência ou manter uma ordem lógica?
+:::
+
+```{r atividade-barras-habito, eval=FALSE}
+dados_est100 |>
+  count(habito_estudo, sort = TRUE) |>
+  mutate(prop = n / sum(n)) |>
+  ggplot(aes(x = fct_reorder(habito_estudo, n), y = prop)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Hábitos de estudo declarados pelos estudantes",
+    x = "Hábito de estudo",
+    y = "Percentual"
+  )
+```
+
+## Gráfico de setores: quando usar e quando evitar
+
+Gráficos de setores podem funcionar quando há poucas categorias e diferenças muito grandes. Porém, quando as fatias têm tamanhos parecidos ou há muitas categorias, a comparação visual fica difícil.
+
+```{r grafico-setores}
+ggplot(tab_facilidade, aes(x = "", y = prop, fill = facilidade_exatas)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(
+    aes(label = percent(prop, accuracy = 1)),
+    position = position_stack(vjust = 0.5)
+  ) +
+  theme_void() +
+  labs(
+    title = "Gráfico de setores: facilidade com Exatas",
+    fill = "Facilidade"
+  )
+```
+
+::: {.alerta}
+**Cuidado.** Em relatórios técnicos, prefira barras quando a comparação entre categorias for central. Setores podem ser usados como ilustração simples, mas não devem dificultar a leitura.
+:::
+
+## Gráfico de Pareto
+
+O gráfico de Pareto ordena as categorias da mais frequente para a menos frequente e acrescenta o percentual acumulado.
+
+```{r pareto}
+tab_pareto <- dados_est100 |>
+  count(curso, sort = TRUE) |>
+  mutate(
+    prop = n / sum(n),
+    prop_acum = cumsum(prop),
+    curso = fct_reorder(curso, n)
+  )
+
+ggplot(tab_pareto, aes(x = curso)) +
+  geom_col(aes(y = prop)) +
+  geom_point(aes(y = prop_acum)) +
+  geom_line(aes(y = prop_acum, group = 1)) +
+  coord_flip() +
+  scale_y_continuous(
+    labels = percent_format(),
+    sec.axis = sec_axis(~ ., labels = percent_format(), name = "Percentual acumulado")
+  ) +
+  labs(
+    title = "Gráfico de Pareto para o curso dos estudantes",
+    subtitle = "Barras: percentual por categoria; linha: percentual acumulado",
+    x = "Curso",
+    y = "Percentual"
+  )
+```
+
+# Variáveis quantitativas
+
+Variáveis quantitativas representam contagens ou medidas numéricas. Agora a pergunta muda: não queremos apenas contar categorias, mas entender a **forma da distribuição**.
+
+## Histograma
+
+```{r histograma-nota}
+ggplot(dados_est100, aes(x = nota_simulada)) +
+  geom_histogram(bins = 12, boundary = 0, closed = "left") +
+  coord_cartesian(xlim = c(0, 100)) +
+  labs(
+    title = "Distribuição das notas simuladas",
+    subtitle = "O histograma agrupa os valores em intervalos",
+    x = "Nota simulada",
+    y = "Frequência"
+  )
+```
+
+::: {.conceito}
+No histograma, a aparência depende da largura das classes. Classes muito largas escondem detalhes. Classes muito estreitas podem criar ruído visual.
+:::
+
+## O efeito do número de classes
+
+```{r histograma-bins}
+ggplot(dados_est100, aes(x = nota_simulada)) +
+  geom_histogram(bins = 6) +
+  labs(
+    title = "Histograma com poucas classes",
+    x = "Nota simulada",
+    y = "Frequência"
+  )
+```
+
+```{r histograma-bins-2}
+ggplot(dados_est100, aes(x = nota_simulada)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Histograma com muitas classes",
+    x = "Nota simulada",
+    y = "Frequência"
+  )
+```
+
+::: {.atividade}
+**Atividade 2.** Modifique o argumento `bins` nos histogramas anteriores. Teste `bins = 8`, `bins = 15`, `bins = 25` e `bins = 40`.
+
+Em seguida, responda: em qual escolha a forma da distribuição ficou mais clara?
+:::
+
+## Histograma em escala de densidade
+
+Quando usamos `aes(y = after_stat(density))`, a área total do histograma passa a ser 1. Isso permite sobrepor uma curva de densidade.
+
+```{r histograma-densidade}
+ggplot(dados_est100, aes(x = nota_simulada)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 15, alpha = 0.45) +
+  geom_density(linewidth = 1) +
+  labs(
+    title = "Histograma com curva de densidade",
+    subtitle = "A curva suaviza a forma geral da distribuição",
+    x = "Nota simulada",
+    y = "Densidade"
+  )
+```
+
+## Densidade por grupo
+
+```{r densidade-por-grupo}
+ggplot(dados_est100, aes(x = nota_simulada, fill = facilidade_exatas)) +
+  geom_density(alpha = 0.35) +
+  labs(
+    title = "Distribuição das notas segundo facilidade com Exatas",
+    x = "Nota simulada",
+    y = "Densidade",
+    fill = "Facilidade"
+  )
+```
+
+::: {.alerta}
+Curvas de densidade são úteis, mas podem sugerir uma suavidade que os dados não têm. Use densidade junto com histograma, boxplot ou pontos quando a amostra for pequena.
+:::
+
+# Visualizando centro, dispersão, caudas e assimetria
+
+## Medidas-resumo
+
+```{r resumo-quantitativas}
+assimetria_momentos <- function(x) {
+  x <- x[!is.na(x)]
+  mean((x - mean(x))^3) / sd(x)^3
+}
+
+dados_est100 |>
+  summarise(
+    media = mean(nota_simulada),
+    mediana = median(nota_simulada),
+    desvio_padrao = sd(nota_simulada),
+    q1 = quantile(nota_simulada, 0.25),
+    q3 = quantile(nota_simulada, 0.75),
+    assimetria = assimetria_momentos(nota_simulada)
+  ) |>
+  mutate(across(where(is.numeric), round, 2)) |>
+  knitr::kable()
+```
+
+::: {.conceito}
+Uma distribuição com média maior do que a mediana tende a apresentar assimetria à direita. Uma distribuição com média menor do que a mediana tende a apresentar assimetria à esquerda. Essa regra é útil, mas deve ser confirmada visualmente.
+:::
+
+## Boxplot
+
+```{r boxplot-nota}
+ggplot(dados_est100, aes(y = nota_simulada)) +
+  geom_boxplot(width = 0.25) +
+  labs(
+    title = "Boxplot das notas simuladas",
+    x = NULL,
+    y = "Nota simulada"
+  )
+```
+
+O boxplot resume a distribuição por meio da mediana, quartis, amplitude interquartílica e possíveis valores atípicos.
+
+## Boxplot por grupo
+
+```{r boxplot-grupo}
+ggplot(dados_est100, aes(x = facilidade_exatas, y = nota_simulada)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.12, alpha = 0.35) +
+  labs(
+    title = "Notas simuladas segundo facilidade com Exatas",
+    subtitle = "Boxplot + pontos ajudam a ver resumo e dados individuais",
+    x = "Facilidade com Exatas",
+    y = "Nota simulada"
+  )
+```
+
+## Violin plot
+
+O `violin plot` combina a ideia do boxplot com uma representação aproximada da densidade.
+
+```{r violin}
+ggplot(dados_est100, aes(x = facilidade_exatas, y = nota_simulada)) +
+  geom_violin(trim = FALSE, alpha = 0.55) +
+  geom_boxplot(width = 0.14) +
+  labs(
+    title = "Violin plot das notas simuladas por grupo",
+    x = "Facilidade com Exatas",
+    y = "Nota simulada"
+  )
+```
+
+::: {.atividade}
+**Atividade 3.** Compare o boxplot e o violin plot. Qual deles comunica melhor:
+
+1. a mediana?
+2. a dispersão?
+3. a forma da distribuição?
+4. a presença de possíveis valores extremos?
+:::
+
+## Função de distribuição empírica
+
+A função de distribuição empírica mostra, para cada valor \(x\), a proporção de observações menores ou iguais a \(x\).
+
+```{r ecdf}
+ggplot(dados_est100, aes(x = nota_simulada)) +
+  stat_ecdf(linewidth = 1) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Função de distribuição empírica das notas",
+    x = "Nota simulada",
+    y = "Percentual acumulado"
+  )
+```
+
+# Assimetria e caudas longas
+
+Agora vamos observar uma variável naturalmente assimétrica: expectativa salarial inicial.
+
+```{r hist-salario}
+ggplot(dados_est100, aes(x = expectativa_salarial)) +
+  geom_histogram(bins = 25) +
+  scale_x_continuous(labels = label_number(prefix = "R$ ", big.mark = ".", decimal.mark = ",")) +
+  labs(
+    title = "Expectativa salarial inicial",
+    subtitle = "Variáveis monetárias frequentemente têm assimetria à direita",
+    x = "Expectativa salarial",
+    y = "Frequência"
+  )
+```
+
+```{r resumo-salario}
+dados_est100 |>
+  summarise(
+    media = mean(expectativa_salarial),
+    mediana = median(expectativa_salarial),
+    p90 = quantile(expectativa_salarial, 0.90),
+    maximo = max(expectativa_salarial),
+    assimetria = assimetria_momentos(expectativa_salarial)
+  ) |>
+  mutate(across(where(is.numeric), round, 2)) |>
+  knitr::kable()
+```
+
+::: {.conceito}
+Quando há assimetria à direita, poucos valores grandes podem puxar a média para cima. Por isso, média e mediana devem ser interpretadas em conjunto.
+:::
+
+## Transformação logarítmica
+
+```{r transformacao-log}
+dados_est100 |>
+  transmute(
+    `Escala original` = expectativa_salarial,
+    `Escala logarítmica` = log(expectativa_salarial)
+  ) |>
+  pivot_longer(cols = everything(), names_to = "escala", values_to = "valor") |>
+  ggplot(aes(x = valor)) +
+  geom_histogram(bins = 25) +
+  facet_wrap(~ escala, scales = "free_x") +
+  labs(
+    title = "Comparação entre escala original e escala logarítmica",
+    x = "Valor",
+    y = "Frequência"
+  )
+```
+
+::: {.atividade}
+**Atividade 4.** Explique, em duas ou três frases, o que mudou depois da transformação logarítmica. A transformação eliminou a assimetria ou apenas a reduziu?
+:::
+
+# Comparando formas de distribuições
+
+Vamos simular três distribuições: uma aproximadamente simétrica, uma assimétrica à direita e uma com caudas mais pesadas.
+
+```{r formas-distribuicoes}
+set.seed(100)
+
+sim_formas <- tibble(
+  simetrica = rnorm(1200, mean = 0, sd = 1),
+  assimetrica_direita = rgamma(1200, shape = 2, scale = 1),
+  cauda_pesada = rt(1200, df = 3)
+) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "distribuicao",
+    values_to = "valor"
+  ) |>
+  mutate(
+    distribuicao = recode(
+      distribuicao,
+      simetrica = "Aproximadamente simétrica",
+      assimetrica_direita = "Assimétrica à direita",
+      cauda_pesada = "Cauda pesada"
+    )
+  )
+
+ggplot(sim_formas, aes(x = valor)) +
+  geom_density(linewidth = 1) +
+  facet_wrap(~ distribuicao, scales = "free") +
+  labs(
+    title = "Três formas de distribuição",
+    x = "Valor",
+    y = "Densidade"
+  )
+```
+
+```{r resumo-formas}
+sim_formas |>
+  group_by(distribuicao) |>
+  summarise(
+    media = mean(valor),
+    mediana = median(valor),
+    desvio_padrao = sd(valor),
+    assimetria = assimetria_momentos(valor),
+    .groups = "drop"
+  ) |>
+  mutate(across(where(is.numeric), round, 2)) |>
+  knitr::kable()
+```
+
+::: {.atividade}
+**Atividade 5.** Observe os três gráficos e a tabela. Para cada distribuição, descreva:
+
+1. onde está o centro;
+2. se há assimetria;
+3. se há caudas longas;
+4. qual medida de posição parece mais representativa.
+:::
+
+# Facetas: o mesmo gráfico para vários grupos
+
+Facetas ajudam a comparar a mesma variável em subgrupos.
+
+```{r facetas-hist}
+ggplot(dados_est100, aes(x = horas_estudo)) +
+  geom_histogram(bins = 18) +
+  facet_wrap(~ facilidade_exatas) +
+  labs(
+    title = "Horas de estudo por facilidade declarada com Exatas",
+    x = "Horas semanais de estudo",
+    y = "Frequência"
+  )
+```
+
+::: {.conceito}
+Facetas são úteis quando queremos repetir o mesmo gráfico para diferentes grupos, mantendo uma estrutura visual comparável.
+:::
+
+# Visualização crítica: estatísticas iguais, gráficos diferentes
+
+Uma das mensagens mais importantes da Análise Exploratória de Dados é que estatísticas-resumo podem ser muito parecidas mesmo quando os gráficos são completamente diferentes.
+
+## Quarteto de Anscombe
+
+O `Quarteto de Anscombe` é um exemplo clássico. Os quatro conjuntos têm estatísticas descritivas muito parecidas, mas relações visuais muito diferentes.
+
+```{r anscombe-dados}
+anscombe_long <- tibble(
+  conjunto = rep(c("I", "II", "III", "IV"), each = nrow(anscombe)),
+  x = c(anscombe$x1, anscombe$x2, anscombe$x3, anscombe$x4),
+  y = c(anscombe$y1, anscombe$y2, anscombe$y3, anscombe$y4)
+)
+
+anscombe_long |>
+  group_by(conjunto) |>
+  summarise(
+    media_x = mean(x),
+    media_y = mean(y),
+    var_x = var(x),
+    var_y = var(y),
+    cor_xy = cor(x, y),
+    inclinacao = coef(lm(y ~ x))[2],
+    .groups = "drop"
+  ) |>
+  mutate(across(where(is.numeric), round, 2)) |>
+  knitr::kable()
+```
+
+```{r anscombe-grafico}
+ggplot(anscombe_long, aes(x = x, y = y)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ conjunto) +
+  labs(
+    title = "Quarteto de Anscombe",
+    subtitle = "Estatísticas semelhantes, padrões visuais muito diferentes",
+    x = "x",
+    y = "y"
+  )
+```
+
+::: {.alerta}
+A mensagem do Quarteto de Anscombe é direta: **não confie apenas em médias, variâncias, correlações e modelos ajustados. Visualize os dados.**
+:::
+
+## Datasaurus Dozen
+
+O `Datasaurus Dozen` amplia a ideia do Quarteto de Anscombe: vários conjuntos de dados possuem estatísticas resumidas quase iguais, mas formas visuais muito diferentes.
+
+```{r datasaurus, eval=FALSE}
+install.packages("datasauRus")
+```
+
+```{r datasaurus-exemplo}
+if (requireNamespace("datasauRus", quietly = TRUE)) {
+  datasauRus::datasaurus_dozen |>
+    group_by(dataset) |>
+    summarise(
+      media_x = mean(x),
+      media_y = mean(y),
+      desvio_x = sd(x),
+      desvio_y = sd(y),
+      cor_xy = cor(x, y),
+      .groups = "drop"
+    ) |>
+    mutate(across(where(is.numeric), round, 2)) |>
+    knitr::kable()
+} else {
+  tibble(
+    mensagem = "Instale o pacote datasauRus para executar esta parte: install.packages('datasauRus')"
+  ) |>
+    knitr::kable()
+}
+```
+
+```{r datasaurus-grafico}
+if (requireNamespace("datasauRus", quietly = TRUE)) {
+  ggplot(datasauRus::datasaurus_dozen, aes(x = x, y = y)) +
+    geom_point(size = 1.4) +
+    facet_wrap(~ dataset, ncol = 4) +
+    labs(
+      title = "Datasaurus Dozen",
+      subtitle = "Muitas formas visuais podem ter estatísticas-resumo semelhantes",
+      x = "x",
+      y = "y"
+    )
+} else {
+  plot.new()
+  text(0.5, 0.5, "Instale o pacote datasauRus para visualizar este exemplo.")
+}
+```
+
+# Erros comuns em visualização de dados
+
+::: {.alerta}
+Alguns erros frequentes:
+
+1. usar gráfico de setores com muitas categorias;
+2. comparar barras sem começar o eixo em zero;
+3. escolher classes inadequadas no histograma;
+4. esconder valores atípicos sem justificativa;
+5. usar cores demais sem necessidade;
+6. criar gráficos bonitos, mas sem pergunta estatística clara.
+:::
+
+## Exemplo: eixo de barras truncado
+
+O gráfico de barras deve, em geral, começar em zero, pois o comprimento da barra representa magnitude.
+
+```{r eixo-zero}
+tab_facilidade |>
+  ggplot(aes(x = facilidade_exatas, y = prop)) +
+  geom_col() +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.60)) +
+  labs(
+    title = "Barras com eixo começando em zero",
+    x = "Facilidade com Exatas",
+    y = "Percentual"
+  )
+```
+
+```{r eixo-truncado}
+tab_facilidade |>
+  ggplot(aes(x = facilidade_exatas, y = prop)) +
+  geom_col() +
+  coord_cartesian(ylim = c(0.20, 0.55)) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Exemplo propositalmente problemático: eixo truncado",
+    subtitle = "A diferença visual parece maior do que realmente é",
+    x = "Facilidade com Exatas",
+    y = "Percentual"
+  )
+```
+
+::: {.atividade}
+**Atividade 6.** Compare os dois gráficos anteriores. Escreva uma frase explicando por que o segundo pode induzir uma interpretação exagerada.
+:::
+
+# Mini-projeto em sala
+
+::: {.atividade}
+**Mini-projeto.** Escolha uma variável qualitativa e uma variável quantitativa da base `dados_est100`. Produza uma pequena análise com:
+
+1. uma tabela de frequências ou medidas-resumo;
+2. um gráfico adequado para a variável qualitativa;
+3. um gráfico adequado para a variável quantitativa;
+4. uma interpretação sobre centro, dispersão, caudas ou assimetria;
+5. uma conclusão curta sobre o que os dados sugerem.
+:::
+
+## Modelo de resposta
+
+```{r mini-projeto-modelo, eval=FALSE}
+# 1. Escolha das variáveis
+# Qualitativa: habito_estudo
+# Quantitativa: horas_estudo
+
+# 2. Frequências
+dados_est100 |>
+  count(habito_estudo, sort = TRUE) |>
+  mutate(prop = n / sum(n))
+
+# 3. Gráfico qualitativo
+dados_est100 |>
+  count(habito_estudo, sort = TRUE) |>
+  mutate(prop = n / sum(n)) |>
+  ggplot(aes(x = fct_reorder(habito_estudo, prop), y = prop)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Distribuição dos hábitos de estudo",
+    x = "Hábito de estudo",
+    y = "Percentual"
+  )
+
+# 4. Gráfico quantitativo
+ggplot(dados_est100, aes(x = horas_estudo)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Distribuição das horas semanais de estudo",
+    x = "Horas de estudo",
+    y = "Frequência"
+  )
+
+# 5. Interpretação
+# Escreva aqui sua interpretação em texto.
+```
+
+# Checklist para interpretar gráficos
+
+Antes de entregar um gráfico, verifique:
+
+```{r checklist, echo=FALSE}
+tibble::tribble(
+  ~Pergunta, ~Verificacao,
+  "O gráfico responde a uma pergunta estatística?", "Evite gráficos decorativos sem objetivo analítico.",
+  "O tipo de gráfico combina com o tipo da variável?", "Barras para categorias; histogramas/densidades para quantitativas.",
+  "As categorias estão ordenadas de forma útil?", "Ordem natural, frequência ou lógica substantiva.",
+  "Os eixos e rótulos estão claros?", "Título, subtítulo, unidade de medida e legenda quando necessário.",
+  "Há sinais de assimetria ou caudas longas?", "Compare média, mediana, histograma, boxplot e densidade.",
+  "Há valores atípicos?", "Investigue antes de excluir.",
+  "A visualização pode induzir erro?", "Cuidado com eixo truncado, setores excessivos e escalas inadequadas."
+) |>
+  knitr::kable()
+```
+
+# Para usar dados reais da turma
+
+Caso o professor tenha uma planilha `dados_turma.csv`, salve-a na mesma pasta deste arquivo `.Rmd` e adapte o código abaixo.
+
+```{r importar-dados-turma, eval=FALSE}
+dados_turma <- readr::read_csv2("dados_turma.csv")
+
+glimpse(dados_turma)
+
+# Exemplo:
+dados_turma |>
+  count(Curso, sort = TRUE) |>
+  ggplot(aes(x = fct_reorder(Curso, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Distribuição dos estudantes por curso",
+    x = "Curso",
+    y = "Frequência"
+  )
+```
+
+# Síntese final
+
+::: {.conceito}
+Nesta prática, vimos que a escolha do gráfico depende do tipo da variável e da pergunta estatística. Para variáveis qualitativas, gráficos de barras geralmente são a primeira escolha. Para variáveis quantitativas, histogramas, densidades, boxplots e ECDFs ajudam a compreender a forma da distribuição. A visualização é indispensável porque medidas-resumo podem ocultar padrões, assimetrias, caudas e valores atípicos.
+:::
+
+# Referências e leituras recomendadas
+
+- Anscombe, F. J. (1973). Graphs in statistical analysis. *The American Statistician*, 27(1), 17--21.
+- Cleveland, W. S. (1993). *Visualizing Data*. Hobart Press.
+- Few, S. (2012). *Show Me the Numbers: Designing Tables and Graphs to Enlighten*. Analytics Press.
+- Matejka, J.; Fitzmaurice, G. (2017). Same Stats, Different Graphs: Generating Datasets with Varied Appearance and Identical Statistics through Simulated Annealing. *CHI Conference on Human Factors in Computing Systems*.
+- Tukey, J. W. (1977). *Exploratory Data Analysis*. Addison-Wesley.
+- Wickham, H. (2016). *ggplot2: Elegant Graphics for Data Analysis*. Springer.
+- Wilkinson, L. (2005). *The Grammar of Graphics*. Springer.
+- Kabacoff, R. (2022). *R in Action: Data Analysis and Graphics with R and Tidyverse*. Manning.
+- Salsburg, D. (2009). *Uma senhora toma chá: como a estatística revolucionou a ciência no século XX*. Zahar.
+- The R Graph Gallery: <https://r-graph-gallery.com/>
+- From Data to Viz: <https://www.data-to-viz.com/>
+- Dataviz Project: <https://datavizproject.com/>

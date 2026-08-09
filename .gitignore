@@ -1,0 +1,38 @@
+# ------------------------------------------------------------------
+# .gitignore para projetos R / RStudio
+# Minicurso "Visualizacao de Dados no R" - IX SID / UFV
+# ------------------------------------------------------------------
+
+# --- R e RStudio ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+*.Rproj
+
+# --- Saidas geradas automaticamente pelo knitr/rmarkdown/learnr ---
+*_cache/
+*_files/
+*.knit.md
+*.utf8.md
+EST100_minicurso_visualizacao_dados.html
+rsconnect/
+figuras/
+
+# --- Ambientes e dependencias ---
+renv/library/
+renv/staging/
+.Renviron
+.Rprofile
+
+# --- Livro de referencia (material protegido por direitos autorais) ---
+# Nao deve ser redistribuido em repositorio publico.
+graphical-data-analysis-with-r-*.pdf
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+~$*

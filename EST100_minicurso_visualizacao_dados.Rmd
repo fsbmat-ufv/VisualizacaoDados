@@ -1,0 +1,2636 @@
+---
+title: "📊 Visualização de Dados no R"
+subtitle: "Minicurso — IX Simpósio de Iniciação à Docência | UFV"
+output:
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+    language: pt
+runtime: shiny_prerendered
+description: "Importar, organizar e visualizar dados no R: CSV e TXT, tabelas de frequência, barras, setores, histogramas, boxplots, ramo-e-folhas, densidades, ggplot2 e versionamento com Git/GitHub."
+---
+
+<style>
+:root{
+  --cor1:#16324f;
+  --cor2:#1f6aa5;
+  --cor3:#2b8a3e;
+  --cor4:#9c36b5;
+  --cor5:#f08c00;
+  --bg1:#eef4ff;
+  --bg2:#eefbf3;
+  --bg3:#f8f0fc;
+  --bg4:#fff4e6;
+  --bg5:#f8f9fa;
+}
+
+body{
+  font-size:18px;
+  line-height:1.7;
+}
+
+h1{
+  color:var(--cor1);
+  font-weight:700;
+  margin-top:1.4em;
+  border-bottom:3px solid #e9ecef;
+  padding-bottom:.25em;
+}
+
+h2{
+  color:var(--cor1);
+  font-weight:700;
+}
+
+h3{
+  color:var(--cor2);
+  font-weight:600;
+}
+
+code{
+  color:#7b2cbf;
+  font-weight:600;
+}
+
+pre{
+  border-radius:14px;
+  border:1px solid #e9ecef;
+  background:#fcfcfd;
+}
+
+.tutorialExercise{
+  background:#ffffff;
+  border:1px solid #e9ecef;
+  border-radius:18px;
+  padding:1rem;
+  margin:1.2rem 0;
+  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+}
+
+.caixa{
+  padding:1rem 1.2rem;
+  border-radius:14px;
+  margin:1rem 0 1.2rem 0;
+}
+
+.destaque{
+  background:var(--bg1);
+  border-left:6px solid var(--cor2);
+}
+
+.dica{
+  background:var(--bg2);
+  border-left:6px solid var(--cor3);
+}
+
+.ponte{
+  background:var(--bg3);
+  border-left:6px solid var(--cor4);
+}
+
+.atencao{
+  background:var(--bg4);
+  border-left:6px solid var(--cor5);
+}
+
+.neutro{
+  background:var(--bg5);
+  border-left:6px solid #495057;
+}
+
+.professor{
+  background:#f5f0ff;
+  border-left:6px solid #7b61ff;
+}
+
+.rotulo{
+  margin-top:1.2rem;
+  margin-bottom:.6rem;
+  font-weight:700;
+  color:var(--cor1);
+  background:#f8f9fa;
+  border-left:5px solid #adb5bd;
+  padding:.55rem .85rem;
+  border-radius:10px;
+}
+
+.badge{
+  display:inline-block;
+  padding:.25em .7em;
+  border-radius:999px;
+  font-size:.82em;
+  font-weight:700;
+  margin-right:.35em;
+}
+
+.badge1{background:#e7f5ff;color:#1864ab;}
+.badge2{background:#ebfbee;color:#2b8a3e;}
+.badge3{background:#fff3bf;color:#e67700;}
+.badge4{background:#f3f0ff;color:#6741d9;}
+
+details{
+  background:#fafafa;
+  border:1px solid #e9ecef;
+  border-radius:12px;
+  padding:.85rem 1rem;
+  margin:1rem 0;
+}
+
+summary{
+  font-weight:700;
+  cursor:pointer;
+  color:var(--cor1);
+}
+
+blockquote{
+  border-left:5px solid #ced4da;
+  background:#fafafa;
+  padding:.8rem 1rem;
+  border-radius:8px;
+}
+
+.mini{
+  font-size:.95em;
+  color:#495057;
+}
+
+.capa{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:26px;
+  background:#ffffff;
+  border:1px solid #e9ecef;
+  border-radius:18px;
+  padding:18px 14px;
+  margin:0 0 1.2rem 0;
+  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+}
+
+.capa .logo{
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  height:78px;
+}
+
+.capa .logo-pibid{width:112px;}
+.capa .logo-ufv{width:106px;}
+.capa .logo-100{width:106px;}
+
+table{
+  font-size:.95em;
+}
+</style>
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(scales)
+
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  comment = "#>",
+  fig.width  = 7.5,
+  fig.height = 4.6,
+  fig.align  = "center"
+)
+
+options(scipen = 999)
+theme_set(theme_minimal(base_size = 13))
+tutorial_options(exercise.timelimit = 120)
+
+# Paleta usada nos gráficos (mesmas cores do CSS)
+cor_azul  <- "#1f6aa5"
+cor_verde <- "#2b8a3e"
+cor_roxo  <- "#9c36b5"
+cor_laran <- "#f08c00"
+cor_escur <- "#16324f"
+paleta5   <- c(cor_azul, cor_verde, cor_roxo, cor_laran, cor_escur)
+
+# ------------------------------------------------------------------
+# 1. Cópia embutida da planilha CompanhiaMB_clear2.xls
+#    (garante que o tutorial funcione mesmo fora da pasta original)
+# ------------------------------------------------------------------
+companhia_bruta <- tibble(
+  registro = 1:36,
+  estado_civil = c("solteiro","casado","casado","solteiro","solteiro","casado",
+                   "solteiro","solteiro","casado","solteiro","casado","solteiro",
+                   "solteiro","casado","casado","solteiro","casado","casado",
+                   "solteiro","solteiro","casado","solteiro","solteiro","casado",
+                   "casado","casado","solteiro","casado","casado","casado",
+                   "solteiro","casado","casado","solteiro","casado","casado"),
+  grau = c("fundamental","fundamental","fundamental","medio","fundamental",
+           "fundamental","fundamental","fundamental","medio","medio","medio",
+           "fundamental","medio","fundamental","medio","medio","medio",
+           "fundamental","superior","medio","medio","medio","fundamental",
+           "superior","medio","medio","fundamental","medio","medio","medio",
+           "superior","medio","superior","superior","medio","superior"),
+  n_filhos = c(NA,1,2,NA,NA,0,NA,NA,1,NA,2,NA,NA,3,0,NA,1,2,NA,NA,1,NA,NA,0,
+               2,2,NA,0,5,2,NA,1,3,NA,2,3),
+  salario = c(4.00,4.56,5.25,5.73,6.26,6.66,6.86,7.39,7.59,7.44,8.12,8.46,
+              8.74,8.95,9.13,9.35,9.77,9.80,10.53,10.76,11.06,11.59,12.00,
+              12.79,13.23,13.60,13.85,14.69,14.71,15.99,16.22,16.61,17.26,
+              18.75,19.40,23.30),
+  idade_anos = c(26,32,36,20,40,28,41,43,34,23,33,27,37,44,30,38,31,39,25,37,
+                 30,34,41,26,32,35,46,29,40,35,31,36,43,33,48,42),
+  idade_meses = c(3,10,5,10,7,0,0,4,10,6,6,11,5,2,5,8,7,7,8,4,9,2,0,1,5,0,7,
+                  8,6,10,5,4,7,7,11,2),
+  procedencia = c("interior","capital","capital","outra","outra","interior",
+                  "interior","capital","capital","outra","interior","capital",
+                  "outra","outra","interior","outra","capital","outra",
+                  "interior","interior","outra","capital","outra","outra",
+                  "interior","outra","outra","interior","interior","capital",
+                  "outra","interior","capital","capital","capital","interior")
+) |>
+  mutate(idade = round(idade_anos + idade_meses / 12, 2)) |>
+  relocate(idade, .after = idade_meses)
+
+# ------------------------------------------------------------------
+# 2. Rede de segurança: recria dados/ caso os arquivos não existam
+# ------------------------------------------------------------------
+# Guarda a pasta do tutorial. Ela é necessária porque os exercícios do learnr
+# são avaliados em um diretório temporário (veja o bloco `prepara-dados`).
+pasta_tutorial <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
+
+if (!dir.exists("dados")) try(dir.create("dados"), silent = TRUE)
+
+if (!file.exists("dados/dados_companhia.csv")) {
+  try(write_csv(companhia_bruta, "dados/dados_companhia.csv"), silent = TRUE)
+}
+if (!file.exists("dados/dados_companhia.txt")) {
+  try(write_csv2(companhia_bruta, "dados/dados_companhia.txt"), silent = TRUE)
+}
+if (!file.exists("dados/dados_companhia_espacos.txt")) {
+  try(write.table(companhia_bruta, "dados/dados_companhia_espacos.txt",
+                  sep = " ", row.names = FALSE, quote = FALSE, na = "NA"),
+      silent = TRUE)
+}
+
+# ------------------------------------------------------------------
+# 3. A base usada no tutorial vem do MESMO CSV que os participantes leem
+# ------------------------------------------------------------------
+companhia <- if (file.exists("dados/dados_companhia.csv")) {
+  read_csv("dados/dados_companhia.csv", show_col_types = FALSE)
+} else {
+  companhia_bruta
+}
+
+companhia <- companhia |>
+  mutate(
+    grau = factor(grau, levels = c("fundamental", "medio", "superior")),
+    estado_civil = factor(estado_civil, levels = c("solteiro", "casado")),
+    procedencia  = factor(procedencia, levels = c("capital", "interior", "outra"))
+  )
+
+# ------------------------------------------------------------------
+# 4. Base simulada de apoio (exercícios rápidos)
+# ------------------------------------------------------------------
+set.seed(42)
+n_turma <- 120
+turma <- tibble(
+  estudante = paste0("Estudante_", 1:n_turma),
+  curso  = sample(c("Ciência de Dados", "Computação", "Engenharia", "Economia"),
+                  n_turma, replace = TRUE, prob = c(0.40, 0.25, 0.20, 0.15)),
+  horas  = round(pmax(0, rlnorm(n_turma, log(5), 0.5)), 1),
+  habito = sample(c("Antecipado", "Véspera", "Misto"),
+                  n_turma, replace = TRUE, prob = c(0.30, 0.30, 0.40))
+) |>
+  mutate(nota = round(pmin(100, pmax(0, 55 + 3 * sqrt(horas) +
+                                       rnorm(n_turma, 0, 10))), 1))
+
+if (!file.exists("dados/turma_simulada.csv")) {
+  try(write_csv(turma, "dados/turma_simulada.csv"), silent = TRUE)
+}
+
+# ------------------------------------------------------------------
+# 5. Bases didáticas para a seção de formas de distribuição
+# ------------------------------------------------------------------
+set.seed(100)
+formas <- tibble(
+  simetrica   = rnorm(1200, mean = 10, sd = 2),
+  assimetrica = rgamma(1200, shape = 2, scale = 2),
+  cauda_longa = rt(1200, df = 3) + 10
+) |>
+  pivot_longer(everything(), names_to = "forma", values_to = "valor") |>
+  mutate(forma = recode(forma,
+                        simetrica   = "1. Aproximadamente simétrica",
+                        assimetrica = "2. Assimétrica à direita",
+                        cauda_longa = "3. Cauda longa"))
+
+set.seed(7)
+mistura <- tibble(
+  grupo = rep(c("Turno da manhã", "Turno da noite"), each = 300),
+  tempo = c(rnorm(300, mean = 25, sd = 5), rnorm(300, mean = 55, sd = 7))
+)
+
+# ------------------------------------------------------------------
+# 6. Função auxiliar para a assimetria (usada em uma seção)
+# ------------------------------------------------------------------
+assimetria <- function(x) {
+  x <- x[!is.na(x)]
+  mean((x - mean(x))^3) / sd(x)^3
+}
+```
+
+```{r prepara-dados, include=FALSE}
+# ------------------------------------------------------------------
+# Bloco de apoio aos exercícios que LEEM ARQUIVOS do disco.
+#
+# O learnr avalia cada exercício em um diretório temporário criado do zero
+# (contendo apenas o arquivo interno `exercise.Rmd`). Os efeitos colaterais do
+# bloco `setup` — como criar a pasta dados/ — não são repetidos ali: só os
+# OBJETOS do setup ficam disponíveis. Sem este bloco, um exercício com
+# read_csv("dados/dados_companhia.csv") falharia com "cannot open file".
+#
+# Solução: copiar a pasta dados/ para o diretório temporário antes de rodar.
+# Todo exercício que lê arquivos declara  exercise.setup="prepara-dados".
+#
+# ATENÇÃO ao manter este arquivo: NÃO acrescente exercise.setup="setup" aqui.
+# Encadear um bloco de setup ao bloco `setup` global quebra o ambiente de knit
+# do learnr 0.11.6 e o documento deixa de compilar com o erro
+# "não foi possível encontrar a função quiz".
+# ------------------------------------------------------------------
+origem_dados <- file.path(pasta_tutorial, "dados")
+
+if (dir.exists(origem_dados) &&
+    !identical(normalizePath(getwd(), winslash = "/", mustWork = FALSE),
+               pasta_tutorial)) {
+  dir.create("dados", showWarnings = FALSE)
+  file.copy(list.files(origem_dados, full.names = TRUE), "dados",
+            overwrite = TRUE)
+}
+```
+
+```{r capa, echo=FALSE, results='asis'}
+# Os logos institucionais entram como background-image em base64.
+#
+# Por que nao usar <img src="Logo.png">? Porque o servidor do shiny_prerendered
+# nao publica os arquivos da pasta do tutorial (voltariam 404).
+# E por que nao usar <img src="data:image/png;base64,...">? Porque o learnr
+# converte em video todo <img> cujo src case com a expressao
+#   /(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)/
+# e uma string base64 longa quase sempre contem "v/" por acaso.
+# Como background-image no CSS, as duas armadilhas somem e o tutorial
+# continua funcionando sem depender de arquivos externos.
+regra_logo <- function(classe, arquivo) {
+  if (!file.exists(arquivo)) return("")
+  sprintf(".capa .%s{background-image:url('%s');}",
+          classe, knitr::image_uri(arquivo))
+}
+
+cat("<style>",
+    regra_logo("logo-pibid", "Logo.png"),
+    regra_logo("logo-ufv",   "UFV.png"),
+    regra_logo("logo-100",   "Logo100.png"),
+    "</style>",
+    '<div class="capa">',
+    '<div class="logo logo-pibid" role="img" aria-label="PIBID - Programa Institucional de Bolsa de Iniciacao a Docencia"></div>',
+    '<div class="logo logo-ufv" role="img" aria-label="Universidade Federal de Vicosa"></div>',
+    '<div class="logo logo-100" role="img" aria-label="UFV 100 anos - 1926 a 2026"></div>',
+    "</div>",
+    sep = "\n")
+```
+
+
+## 👋 Boas-vindas
+
+<div class="caixa destaque">
+<span class="badge badge1">Minicurso</span>
+<span class="badge badge2">R</span>
+<span class="badge badge3">Estatística Descritiva</span>
+<span class="badge badge4">IX SID</span>
+<b>Ideia central:</b> um gráfico não é enfeite. Ele é uma forma de <b>pensar</b> sobre os dados.
+Neste minicurso vamos partir de um arquivo bruto, organizá-lo e transformá-lo em
+evidência visual.
+</div>
+
+Bem-vindo(a)! Este é um tutorial **interativo**: você lê, executa o código na
+própria página e vê o resultado na hora. Não é preciso ter experiência prévia
+com R.
+
+### 🎯 Objetivo do minicurso
+
+<div class="caixa neutro">
+Capacitar você a usar o R para <b>importar</b>, <b>organizar</b> e <b>visualizar</b>
+dados em diferentes formatos (CSV e TXT), desenvolvendo habilidade para
+<b>interpretar</b> e <b>construir</b> os principais gráficos da Estatística Descritiva.
+</div>
+
+Ao final, você deverá conseguir:
+
+1. importar arquivos `.csv` e `.txt` com o pacote `readr`;
+2. organizar dados com `select()`, `filter()`, `mutate()`, `group_by()` e `summarise()`;
+3. construir tabelas de frequência e gráficos de barras e setores;
+4. construir e interpretar histogramas, boxplots, ramo-e-folhas e densidades;
+5. descrever a distribuição dos dados: simetria, dispersão e valores atípicos;
+6. montar gráficos em camadas com `ggplot2`;
+7. versionar seu material de aula com Git e GitHub.
+
+### 🧭 Como funciona este tutorial
+
+<div class="caixa dica">
+<b>Três tipos de bloco aparecem no texto:</b>
+<ul>
+<li><b>Blocos de demonstração</b> — o código já está pronto, é só clicar em <i>Run Code</i>;</li>
+<li><b>Blocos de exercício</b> — você completa o código e testa (há <i>Hint</i> e <i>Solution</i>);</li>
+<li><b>Quizzes</b> — perguntas rápidas de checagem, com tentativas ilimitadas.</li>
+</ul>
+Use o botão <b>Continue</b> para avançar e o menu lateral para navegar entre os tópicos.
+</div>
+
+<div class="caixa atencao">
+<b>Errar aqui é seguro.</b> Nada do que você digitar estraga o material. Se algo
+quebrar, clique em <i>Start Over</i> no canto do bloco e tente de novo. Aprender R
+acontece justamente quando você <b>modifica</b> os exemplos.
+</div>
+
+### 📦 Os pacotes que vamos usar
+
+| Pacote | Para que serve | Função típica |
+|:-------|:---------------|:--------------|
+| `readr` | **Importar** arquivos de texto | `read_csv()`, `read_delim()` |
+| `readxl` | **Importar** planilhas do Excel | `read_excel()` |
+| `dplyr` | **Organizar** e resumir dados | `filter()`, `summarise()` |
+| `ggplot2` | **Visualizar** dados em camadas | `ggplot()`, `geom_*()` |
+| `forcats` | Organizar **categorias** (fatores) | `fct_reorder()` |
+
+Os quatro últimos vêm juntos no `tidyverse`:
+
+```{r pacotes-demo, exercise=TRUE}
+# Uma linha carrega quase tudo o que vamos usar
+library(tidyverse)
+
+# Para conferir o que foi carregado:
+tidyverse_packages()
+```
+
+<div class="caixa professor">
+<b>Nota ao professor.</b> Em turmas iniciantes, vale abrir o minicurso mostrando
+o caminho completo <i>planilha → arquivo de texto → tabela no R → gráfico</i>.
+Muitos estudantes travam não no gráfico, mas na importação. Por isso este
+tutorial começa exatamente por ali.
+</div>
+
+## 📂 Importando dados: CSV e TXT
+
+### 🗂️ De onde vieram os dados
+
+Vamos trabalhar com uma base **real e clássica** da literatura estatística
+brasileira: os dados de **36 funcionários da Companhia MB**.
+
+Para cada funcionário registramos:
+
+| Coluna | Significado | Tipo de variável |
+|:-------|:------------|:-----------------|
+| `registro` | Número de identificação | Identificador |
+| `estado_civil` | `solteiro` ou `casado` | Qualitativa nominal |
+| `grau` | Grau de instrução (`fundamental`, `medio`, `superior`) | Qualitativa **ordinal** |
+| `n_filhos` | Número de filhos (só para casados) | Quantitativa discreta |
+| `salario` | Salário, em salários mínimos | Quantitativa contínua |
+| `idade_anos` | Idade em anos completos | Quantitativa discreta |
+| `idade_meses` | Meses adicionais de idade | Quantitativa discreta |
+| `idade` | Idade em anos decimais | Quantitativa contínua |
+| `procedencia` | Região de origem (`capital`, `interior`, `outra`) | Qualitativa nominal |
+
+<div class="caixa atencao">
+<b>Atenção ao <code>NA</code>.</b> A coluna <code>n_filhos</code> tem valores ausentes
+(<code>NA</code>) porque a pergunta só foi feita aos funcionários casados. Valor
+ausente <b>não é</b> zero — e essa diferença muda a análise.
+</div>
+
+### 📤 Da planilha para o arquivo de texto
+
+Os dados originais estavam em uma **planilha** (`CompanhiaMB_clear2.xls`). O
+primeiro passo foi lê-la com o pacote `readxl` e exportá-la para os formatos que
+vamos praticar. Este é o código que gerou a pasta `dados/`:
+
+```{r exporta-demo, eval=FALSE, echo=TRUE}
+library(readxl)
+library(readr)
+library(dplyr)
+
+dir.create("dados", showWarnings = FALSE)
+
+bruto <- read_excel("CompanhiaMB_clear2.xls")
+
+companhia <- bruto |>
+  transmute(
+    registro     = as.integer(Registro),
+    estado_civil = Estado_Civil,
+    grau         = Grau,
+    n_filhos     = as.integer(N_filhos),
+    salario      = as.numeric(Salario),
+    idade_anos   = as.integer(Id_Anos),
+    idade_meses  = as.integer(Id_Meses),
+    idade        = round(idade_anos + idade_meses / 12, 2),
+    procedencia  = Procedencia
+  )
+
+# 1) CSV internacional: separador vírgula, decimal ponto
+write_csv(companhia,  "dados/dados_companhia.csv")
+
+# 2) TXT brasileiro: separador ponto-e-vírgula, decimal vírgula
+write_csv2(companhia, "dados/dados_companhia.txt")
+
+# 3) TXT alinhado por espaços
+write.table(companhia, "dados/dados_companhia_espacos.txt",
+            sep = " ", row.names = FALSE, quote = FALSE, na = "NA")
+```
+
+<div class="caixa dica">
+<b>Por que exportar para texto?</b> Arquivos <code>.csv</code> e <code>.txt</code> são
+texto puro: abrem em qualquer computador, em qualquer programa, hoje e daqui a
+vinte anos. Planilhas mudam de formato; texto puro não.
+</div>
+
+### 👀 Espiar o arquivo antes de importar
+
+Antes de importar, **olhe** o arquivo. A função `readLines()` mostra as primeiras
+linhas como texto cru:
+
+```{r espiar, exercise=TRUE, exercise.setup="prepara-dados"}
+# As 4 primeiras linhas do CSV
+readLines("dados/dados_companhia.csv", n = 4)
+```
+
+Três perguntas para responder olhando o arquivo:
+
+1. **Existe uma linha de cabeçalho** com os nomes das colunas?
+2. **Qual é o separador** de colunas: vírgula, ponto-e-vírgula, tabulação, espaço?
+3. **Qual é o separador decimal**: ponto ou vírgula?
+
+<div class="caixa atencao">
+<b>Compare agora com o arquivo brasileiro.</b> Rode o bloco abaixo e veja a diferença.
+</div>
+
+```{r espiar-txt, exercise=TRUE, exercise.setup="prepara-dados"}
+readLines("dados/dados_companhia.txt", n = 4)
+```
+
+Repare: o separador é `;` e o decimal é `,` (por exemplo, `4,56`). É exatamente o
+que o Excel em português produz.
+
+### 📄 `read_csv()`: o caso mais comum
+
+```{r ler-csv, exercise=TRUE, exercise.setup="prepara-dados"}
+dados <- read_csv("dados/dados_companhia.csv")
+
+dados
+```
+
+O `read_csv()` já devolve um **tibble**: uma tabela que se imprime de forma
+enxuta, informando o tipo de cada coluna (`<dbl>` = número, `<chr>` = texto).
+
+Duas funções para inspecionar o que chegou:
+
+```{r inspecionar, exercise=TRUE, exercise.setup="prepara-dados"}
+dados <- read_csv("dados/dados_companhia.csv", show_col_types = FALSE)
+
+glimpse(dados)   # uma linha por coluna: nome, tipo e primeiros valores
+```
+
+```{r inspecionar-hint}
+# Experimente também:
+# head(dados)      -> primeiras linhas
+# tail(dados)      -> últimas linhas
+# dim(dados)       -> número de linhas e colunas
+# names(dados)     -> nomes das colunas
+# summary(dados)   -> resumo numérico de cada coluna
+```
+
+### 📑 `read_delim()`: quando o separador não é a vírgula
+
+Para o arquivo brasileiro (`;` e decimal `,`) usamos `read_delim()` informando o
+delimitador **e** o `locale`:
+
+```{r ler-txt, exercise=TRUE, exercise.setup="prepara-dados"}
+dados_br <- read_delim(
+  "dados/dados_companhia.txt",
+  delim  = ";",
+  locale = locale(decimal_mark = ",", grouping_mark = "."),
+  show_col_types = FALSE
+)
+
+glimpse(dados_br)
+```
+
+<div class="caixa dica">
+<b>Atalho.</b> Como o padrão brasileiro é tão comum, o <code>readr</code> tem uma
+função pronta: <code>read_csv2()</code> já assume separador <code>;</code> e decimal
+<code>,</code>. É equivalente ao <code>read_delim()</code> acima.
+</div>
+
+```{r ler-csv2, exercise=TRUE, exercise.setup="prepara-dados"}
+dados_br2 <- read_csv2("dados/dados_companhia.txt", show_col_types = FALSE)
+
+head(dados_br2)
+```
+
+### ␣ `read_table()`: campos separados por espaços
+
+Alguns arquivos `.txt` (muito comuns em saídas de programas científicos) separam
+as colunas por espaços ou tabulações:
+
+```{r espiar-espacos, exercise=TRUE, exercise.setup="prepara-dados"}
+readLines("dados/dados_companhia_espacos.txt", n = 3)
+```
+
+Nesse caso, `read_table()` resolve:
+
+```{r ler-table, exercise=TRUE, exercise.setup="prepara-dados"}
+dados_esp <- read_table("dados/dados_companhia_espacos.txt")
+
+head(dados_esp)
+```
+
+### 🧨 O que mais dá errado na importação
+
+<div class="caixa atencao">
+<b>Os cinco erros clássicos:</b>
+<ol>
+<li><b>Separador errado</b> — tudo vira uma coluna só. Solução: olhe o arquivo e ajuste <code>delim</code>.</li>
+<li><b>Decimal errado</b> — a coluna numérica vira texto. Solução: <code>locale(decimal_mark = ",")</code>.</li>
+<li><b>Caminho errado</b> — <i>"cannot open file"</i>. Solução: confira com <code>list.files()</code>.</li>
+<li><b>Acentos estranhos</b> (<i>SÃ£o Paulo</i>) — problema de codificação. Solução: <code>locale(encoding = "latin1")</code>.</li>
+<li><b>Ausentes disfarçados</b> — o arquivo usa <code>-99</code> ou <code>"."</code> para dado faltante. Solução: <code>na = c("", "NA", "-99")</code>.</li>
+</ol>
+</div>
+
+```{r list-files, exercise=TRUE, exercise.setup="prepara-dados"}
+# Onde o R está procurando os arquivos?
+getwd()
+
+# O que existe na pasta dados/ ?
+list.files("dados")
+```
+
+### ✏️ Exercício — importe o arquivo brasileiro
+
+Complete o código para ler `dados/dados_companhia.txt` corretamente, sabendo que
+o separador é `;` e o decimal é `,`.
+
+```{r ex-import, exercise=TRUE, exercise.setup="prepara-dados", exercise.lines=8}
+meus_dados <- read_delim(
+  "dados/dados_companhia.txt",
+  delim  = _____,
+  locale = locale(decimal_mark = _____),
+  show_col_types = FALSE
+)
+
+glimpse(meus_dados)
+```
+
+```{r ex-import-hint}
+# O separador de colunas é o ponto-e-vírgula: ";"
+# O separador decimal é a vírgula: ","
+# Os dois são textos, então precisam de aspas.
+```
+
+```{r ex-import-solution}
+meus_dados <- read_delim(
+  "dados/dados_companhia.txt",
+  delim  = ";",
+  locale = locale(decimal_mark = ","),
+  show_col_types = FALSE
+)
+
+glimpse(meus_dados)
+```
+
+### 🧠 Quiz — importação
+
+```{r quiz-import, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Você abriu um arquivo `.txt` e a primeira linha é: `nome;idade;salario`. Qual função é a mais adequada?",
+    answer("`read_csv()`", message = "O `read_csv()` espera vírgula como separador."),
+    answer("`read_csv2()` ou `read_delim(delim = ';')`", correct = TRUE,
+           message = "Isso! O separador é ponto-e-vírgula."),
+    answer("`read_table()`", message = "O `read_table()` serve para colunas separadas por espaços."),
+    answer("`read_excel()`", message = "O `read_excel()` é para planilhas .xls/.xlsx."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Uma coluna que deveria ser numérica foi importada como texto (`<chr>`). Qual é a causa mais provável?",
+    answer("O R não sabe fazer contas", message = "O R sabe — o problema está na leitura do arquivo."),
+    answer("O separador decimal do arquivo é a vírgula e não foi declarado no `locale`", correct = TRUE,
+           message = "Exato. Sem `decimal_mark = ','`, o R vê `4,56` como texto."),
+    answer("O arquivo tem poucas linhas", message = "O número de linhas não interfere no tipo da coluna."),
+    answer("Faltou carregar o `ggplot2`", message = "O `ggplot2` só entra na etapa do gráfico."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Na base da Companhia MB, o que significa `NA` na coluna `n_filhos`?",
+    answer("O funcionário tem zero filhos", message = "Cuidado: zero é um valor observado; `NA` é ausência de informação."),
+    answer("A informação não se aplica/não foi coletada (funcionário solteiro)", correct = TRUE,
+           message = "Correto. `NA` é ausência de informação, e não o valor zero."),
+    answer("Houve erro de digitação", message = "Aqui o `NA` é intencional."),
+    answer("O salário está faltando", message = "O `NA` está apenas em `n_filhos`."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 🔧 Organizando os dados com `dplyr`
+
+Antes de qualquer gráfico vem a **organização**. O `dplyr` tem poucos verbos, e
+cada um faz uma coisa só:
+
+| Verbo | O que faz |
+|:------|:----------|
+| `select()` | escolhe **colunas** |
+| `filter()` | escolhe **linhas** |
+| `arrange()` | **ordena** linhas |
+| `mutate()` | **cria** ou modifica colunas |
+| `count()` | **conta** categorias |
+| `group_by()` + `summarise()` | **resume por grupo** |
+
+<div class="caixa destaque">
+<b>O pipe <code>|></code>.</b> Leia como "então". A expressão<br>
+<code>companhia |> filter(grau == "superior") |> summarise(media = mean(salario))</code><br>
+significa: pegue a base, <b>então</b> filtre, <b>então</b> resuma.
+</div>
+
+A base já está carregada como `companhia` em todos os blocos desta página.
+
+### 🔹 `select()` — escolhendo colunas
+
+```{r dplyr-select, exercise=TRUE}
+companhia |>
+  select(registro, grau, salario, idade)
+```
+
+```{r dplyr-select-hint}
+# Outras formas úteis:
+# select(companhia, -registro)             # tudo, menos registro
+# select(companhia, starts_with("idade"))  # colunas que começam com "idade"
+```
+
+### 🔹 `filter()` — escolhendo linhas
+
+```{r dplyr-filter, exercise=TRUE}
+# Funcionários com salário acima de 15 salários mínimos
+companhia |>
+  filter(salario > 15)
+```
+
+```{r dplyr-filter-hint}
+# Condições podem ser combinadas:
+#   &  significa "e"      |  significa "ou"
+# companhia |> filter(grau == "superior" & idade < 35)
+```
+
+### 🔹 `mutate()` — criando colunas
+
+```{r dplyr-mutate, exercise=TRUE}
+companhia |>
+  mutate(
+    faixa_salarial = if_else(salario >= 10, "Acima de 10 SM", "Até 10 SM"),
+    salario_reais  = salario * 1518   # salário mínimo de referência
+  ) |>
+  select(registro, salario, salario_reais, faixa_salarial) |>
+  head(8)
+```
+
+### 🔹 `count()` — contando categorias
+
+```{r dplyr-count, exercise=TRUE}
+companhia |>
+  count(grau)
+```
+
+### 🔹 `group_by()` + `summarise()` — resumindo por grupo
+
+Este é o padrão mais poderoso do `dplyr`:
+
+```{r dplyr-group, exercise=TRUE}
+companhia |>
+  group_by(grau) |>
+  summarise(
+    n            = n(),
+    media        = mean(salario),
+    mediana      = median(salario),
+    desvio       = sd(salario)
+  )
+```
+
+<div class="caixa dica">
+<b>Leia o resultado.</b> O salário médio cresce com o grau de instrução. Mas
+repare também no <code>n</code>: o grupo <code>superior</code> tem poucos funcionários,
+então essa média é menos estável do que as outras.
+</div>
+
+### ✏️ Exercício — resumo por procedência
+
+Calcule, para cada `procedencia`, o número de funcionários e a **idade média**.
+
+```{r ex-dplyr, exercise=TRUE, exercise.lines=8}
+companhia |>
+  group_by(_____) |>
+  summarise(
+    n           = n(),
+    idade_media = mean(_____)
+  )
+```
+
+```{r ex-dplyr-hint}
+# A variável de agrupamento é `procedencia`.
+# A variável a resumir é `idade`.
+```
+
+```{r ex-dplyr-solution}
+companhia |>
+  group_by(procedencia) |>
+  summarise(
+    n           = n(),
+    idade_media = mean(idade)
+  )
+```
+
+### ✏️ Exercício — cuidado com o `NA`
+
+Rode o código abaixo. A média de filhos aparece como `NA`. Conserte
+acrescentando `na.rm = TRUE` dentro do `mean()`.
+
+```{r ex-na, exercise=TRUE, exercise.lines=5}
+companhia |>
+  summarise(
+    media_filhos = mean(n_filhos)
+  )
+```
+
+```{r ex-na-hint}
+# mean(x, na.rm = TRUE) ignora os valores ausentes.
+# Pergunta para pensar: essa média se refere a quem, exatamente?
+```
+
+```{r ex-na-solution}
+companhia |>
+  summarise(
+    media_filhos = mean(n_filhos, na.rm = TRUE)
+  )
+```
+
+<div class="caixa atencao">
+<b>Interpretação honesta.</b> Com <code>na.rm = TRUE</code> a média de filhos é
+calculada <b>apenas entre os casados</b>, porque só eles responderam. Escrever isso
+no relatório é parte do trabalho estatístico.
+</div>
+
+### 🧠 Quiz — organização
+
+```{r quiz-dplyr, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Qual verbo do `dplyr` seleciona **linhas** que satisfazem uma condição?",
+    answer("`filter()`", correct = TRUE),
+    answer("`select()`", message = "`select()` escolhe colunas."),
+    answer("`mutate()`", message = "`mutate()` cria colunas."),
+    answer("`arrange()`", message = "`arrange()` apenas ordena."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "O que o código `companhia |> group_by(grau) |> summarise(m = mean(salario))` devolve?",
+    answer("Uma tabela com uma linha por grau de instrução e o salário médio de cada um", correct = TRUE),
+    answer("A base original com uma coluna nova", message = "Isso seria `mutate()`."),
+    answer("Um gráfico de barras", message = "`summarise()` devolve tabela, não gráfico."),
+    answer("O salário médio geral, em um único número", message = "Sem o `group_by()`, sim; com ele, o resumo é por grupo."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 📊 Distribuições de frequência
+
+Para variáveis **qualitativas**, a primeira pergunta é sempre a mesma: *quantos
+casos há em cada categoria?*
+
+### 🔢 Tabela de frequência absoluta
+
+```{r tab-abs, exercise=TRUE}
+companhia |>
+  count(grau, name = "frequencia_absoluta")
+```
+
+### 📐 Frequência relativa e acumulada
+
+A frequência **absoluta** conta; a **relativa** proporciona; a **acumulada**
+soma de cima para baixo.
+
+```{r tab-rel, exercise=TRUE}
+tabela_grau <- companhia |>
+  count(grau, name = "f_absoluta") |>
+  mutate(
+    f_relativa  = f_absoluta / sum(f_absoluta),
+    percentual  = percent(f_relativa, accuracy = 0.1),
+    f_acumulada = cumsum(f_absoluta)
+  )
+
+tabela_grau
+```
+
+<div class="caixa dica">
+<b>Quando usar cada uma.</b> A frequência absoluta responde "quantos?".
+A relativa responde "que fração do total?" e permite comparar grupos de tamanhos
+diferentes. A acumulada só faz sentido quando as categorias têm ordem — como
+<code>grau</code>, que é <b>ordinal</b>.
+</div>
+
+### 📊 Gráfico de barras
+
+Barras são a primeira escolha para variáveis qualitativas: o olho compara
+**comprimentos** com muita precisão.
+
+```{r barras1, exercise=TRUE}
+ggplot(companhia, aes(x = grau)) +
+  geom_bar(fill = cor_azul) +
+  labs(
+    title = "Grau de instrução dos funcionários da Companhia MB",
+    x = "Grau de instrução",
+    y = "Número de funcionários"
+  )
+```
+
+### 🏷️ Barras com rótulos e percentuais
+
+```{r barras2, exercise=TRUE}
+companhia |>
+  count(grau) |>
+  mutate(prop = n / sum(n)) |>
+  ggplot(aes(x = grau, y = prop)) +
+  geom_col(fill = cor_azul) +
+  geom_text(aes(label = percent(prop, accuracy = 0.1)), vjust = -0.4) +
+  scale_y_continuous(labels = percent_format(),
+                     expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title = "Distribuição percentual do grau de instrução",
+    x = "Grau de instrução",
+    y = "Percentual de funcionários"
+  )
+```
+
+### ↕️ Barras ordenadas (quando a variável é nominal)
+
+Para variáveis **nominais** (sem ordem natural), ordenar pela frequência
+facilita a leitura. Quem faz isso é o `fct_reorder()`, do `forcats`.
+
+```{r barras3, exercise=TRUE}
+companhia |>
+  count(procedencia) |>
+  ggplot(aes(x = fct_reorder(procedencia, n), y = n)) +
+  geom_col(fill = cor_verde) +
+  coord_flip() +
+  labs(
+    title = "Procedência dos funcionários",
+    x = "Procedência",
+    y = "Número de funcionários"
+  )
+```
+
+<div class="caixa atencao">
+<b>Regra prática.</b> Variável <b>nominal</b> → ordene pela frequência.
+Variável <b>ordinal</b> (como <code>grau</code>) → <b>mantenha</b> a ordem natural.
+Reordenar uma variável ordinal destrói informação.
+</div>
+
+### 🥧 Gráfico de setores
+
+O gráfico de setores (pizza) representa proporções como fatias de um círculo.
+No `ggplot2` ele é uma barra empilhada em coordenadas polares:
+
+```{r setores, exercise=TRUE}
+companhia |>
+  count(grau) |>
+  mutate(prop = n / sum(n)) |>
+  ggplot(aes(x = "", y = prop, fill = grau)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = percent(prop, accuracy = 1)),
+            position = position_stack(vjust = 0.5), color = "white",
+            fontface = "bold") +
+  scale_fill_manual(values = paleta5) +
+  theme_void() +
+  labs(title = "Grau de instrução (gráfico de setores)", fill = "Grau")
+```
+
+<div class="caixa atencao">
+<b>Use com cautela.</b> O olho humano compara ângulos e áreas muito pior do que
+compara comprimentos. Com poucas categorias e diferenças grandes, a pizza
+funciona. Com muitas categorias ou fatias parecidas, ela atrapalha. Em relatório
+técnico, prefira barras.
+</div>
+
+### ✏️ Exercício — barras de estado civil
+
+Construa um gráfico de barras da variável `estado_civil`.
+
+```{r ex-barras, exercise=TRUE, exercise.lines=8}
+ggplot(companhia, aes(x = _____)) +
+  geom_bar(fill = cor_laran) +
+  labs(
+    title = "Estado civil dos funcionários",
+    x = "Estado civil",
+    y = "Número de funcionários"
+  )
+```
+
+```{r ex-barras-hint}
+# A variável tem exatamente o nome que aparece na tabela: estado_civil
+```
+
+```{r ex-barras-solution}
+ggplot(companhia, aes(x = estado_civil)) +
+  geom_bar(fill = cor_laran) +
+  labs(
+    title = "Estado civil dos funcionários",
+    x = "Estado civil",
+    y = "Número de funcionários"
+  )
+```
+
+### 🧠 Quiz — frequências
+
+```{r quiz-freq, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Para comparar com precisão a frequência de 5 categorias, qual gráfico é mais eficiente?",
+    answer("Gráfico de barras", correct = TRUE,
+           message = "Sim: comparar comprimentos em uma escala comum é a tarefa visual mais precisa."),
+    answer("Gráfico de setores", message = "Ângulos e áreas são comparados com muito menos precisão."),
+    answer("Histograma", message = "Histograma é para variáveis quantitativas contínuas."),
+    answer("Boxplot", message = "Boxplot resume distribuições numéricas."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "A variável `grau` é ordinal. O que **não** se deve fazer no gráfico de barras?",
+    answer("Reordenar as categorias pela frequência", correct = TRUE,
+           message = "Correto: reordenar uma variável ordinal apaga a ordem, que é informação."),
+    answer("Mostrar percentuais em vez de contagens", message = "Isso é perfeitamente válido."),
+    answer("Colocar rótulos nas barras", message = "Rótulos ajudam a leitura."),
+    answer("Começar o eixo em zero", message = "Começar em zero é justamente o recomendado."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 📶 Histogramas
+
+Para variáveis **quantitativas contínuas** não faz sentido contar valor a valor
+(quase todos aparecem uma vez só). A saída é agrupar em **classes** — é isso que
+o histograma faz.
+
+### 🧱 Do que é feito um histograma
+
+```{r hist1, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(bins = 6, fill = cor_azul, color = "white",
+                 boundary = 4, closed = "left") +
+  labs(
+    title = "Distribuição dos salários na Companhia MB",
+    subtitle = "6 classes de amplitude constante",
+    x = "Salário (em salários mínimos)",
+    y = "Frequência"
+  )
+```
+
+<div class="caixa destaque">
+<b>Como ler.</b> Cada barra cobre um intervalo de salários; a altura é quantos
+funcionários caem naquele intervalo. Diferente do gráfico de barras, aqui as
+barras se <b>encostam</b>: o eixo x é contínuo, não tem "buracos" entre categorias.
+</div>
+
+### 🔍 O efeito do número de classes
+
+O histograma é o gráfico mais fácil de "enganar" sem querer. Compare:
+
+```{r hist-bins, exercise=TRUE}
+p <- ggplot(companhia, aes(x = salario)) +
+  labs(x = "Salário (SM)", y = "Frequência")
+
+# Poucas classes: esconde detalhes
+p + geom_histogram(bins = 3, fill = cor_azul, color = "white") +
+  labs(title = "bins = 3 (grosseiro demais)")
+```
+
+```{r hist-bins2, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(bins = 25, fill = cor_azul, color = "white") +
+  labs(title = "bins = 25 (fino demais para n = 36)",
+       x = "Salário (SM)", y = "Frequência")
+```
+
+<div class="caixa atencao">
+<b>Não existe número "certo" de classes.</b> Existe um número <b>útil</b>: aquele
+que mostra a forma da distribuição sem inventar detalhes. Sempre teste mais de
+um valor antes de decidir.
+</div>
+
+### 📏 Regras práticas para o número de classes
+
+O R conhece três regras clássicas. Elas são **sugestões**, não obrigações:
+
+```{r regras-bins, exercise=TRUE}
+x <- companhia$salario
+
+# Regra de Sturges: k = 1 + log2(n)
+nclass.Sturges(x)
+
+# Regra de Scott: baseada no desvio padrão
+nclass.scott(x)
+
+# Regra de Freedman-Diaconis: baseada no IQR (robusta a outliers)
+nclass.FD(x)
+```
+
+Também dá para controlar a **largura** da classe em vez do número, o que costuma
+ser mais interpretável:
+
+```{r hist-binwidth, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(binwidth = 4, boundary = 4,
+                 fill = cor_verde, color = "white") +
+  labs(
+    title = "Classes de 4 salários mínimos de largura",
+    subtitle = "binwidth é mais fácil de explicar do que bins",
+    x = "Salário (SM)", y = "Frequência"
+  )
+```
+
+### 🌊 Histograma + curva de densidade
+
+A curva de densidade é uma versão **suavizada** do histograma. Para sobrepor as
+duas, o histograma precisa estar na escala de densidade (área total igual a 1):
+
+```{r hist-dens, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 8, fill = cor_azul, alpha = 0.45, color = "white") +
+  geom_density(color = cor_laran, linewidth = 1.2) +
+  labs(
+    title = "Histograma e curva de densidade",
+    subtitle = "A curva suaviza; o histograma mostra a contagem real",
+    x = "Salário (SM)", y = "Densidade"
+  )
+```
+
+<div class="caixa atencao">
+<b>Cuidado com a suavidade.</b> A curva de densidade sempre parece bonita e
+contínua, mesmo com poucos dados. Com n = 36, ela é uma <b>sugestão</b> de forma,
+não uma descrição precisa. Mostre histograma e densidade juntos.
+</div>
+
+### ✏️ Exercício — histograma das idades
+
+Faça um histograma da variável `idade` usando `binwidth = 5`.
+
+```{r ex-hist, exercise=TRUE, exercise.lines=8}
+ggplot(companhia, aes(x = _____)) +
+  geom_histogram(binwidth = _____, fill = cor_roxo, color = "white") +
+  labs(
+    title = "Distribuição das idades",
+    x = "Idade (anos)",
+    y = "Frequência"
+  )
+```
+
+```{r ex-hist-hint}
+# A variável é `idade` e a largura pedida é 5.
+# Depois, experimente binwidth = 2 e binwidth = 10 e compare.
+```
+
+```{r ex-hist-solution}
+ggplot(companhia, aes(x = idade)) +
+  geom_histogram(binwidth = 5, fill = cor_roxo, color = "white") +
+  labs(
+    title = "Distribuição das idades",
+    x = "Idade (anos)",
+    y = "Frequência"
+  )
+```
+
+### 🧠 Quiz — histogramas
+
+```{r quiz-hist, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Qual é a diferença essencial entre um gráfico de barras e um histograma?",
+    answer("As barras do histograma se encostam porque o eixo x é contínuo; no gráfico de barras há categorias separadas", correct = TRUE),
+    answer("O histograma é sempre colorido", message = "Cor é escolha estética, não definição."),
+    answer("O gráfico de barras não pode ter título", message = "Pode, e deve."),
+    answer("O histograma só serve para variáveis qualitativas", message = "É o contrário: histograma é para quantitativas."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Você aumentou muito o número de classes de um histograma com poucos dados. O que tende a acontecer?",
+    answer("O gráfico fica cheio de barras isoladas e sugere padrões que são só ruído", correct = TRUE),
+    answer("A distribuição fica automaticamente simétrica", message = "O número de classes não muda a assimetria dos dados."),
+    answer("A média dos dados muda", message = "As estatísticas dos dados não dependem do gráfico."),
+    answer("O R devolve erro", message = "O R obedece: o problema é de interpretação, não de execução."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Qual regra para o número de classes é mais robusta na presença de valores atípicos?",
+    answer("Freedman-Diaconis (`nclass.FD`), porque usa o IQR", correct = TRUE),
+    answer("Sturges (`nclass.Sturges`)", message = "Sturges usa só o tamanho da amostra."),
+    answer("Scott (`nclass.scott`)", message = "Scott usa o desvio padrão, que é sensível a outliers."),
+    answer("Nenhuma delas considera os dados", message = "Scott e FD consideram, sim, a dispersão dos dados."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 📦 Boxplots
+
+O boxplot é o resumo visual mais econômico que existe: em um desenho pequeno ele
+mostra centro, dispersão, assimetria e possíveis valores atípicos.
+
+### 🧬 Anatomia do boxplot
+
+```{r box1, exercise=TRUE}
+ggplot(companhia, aes(y = salario)) +
+  geom_boxplot(fill = cor_azul, alpha = 0.5, width = 0.4) +
+  labs(
+    title = "Boxplot dos salários",
+    y = "Salário (SM)", x = NULL
+  ) +
+  theme(axis.text.x = element_blank())
+```
+
+<div class="caixa destaque">
+<b>Como ler um boxplot</b>
+<ul>
+<li><b>Linha central</b> — a mediana (50% dos dados abaixo, 50% acima);</li>
+<li><b>Caixa</b> — do 1º ao 3º quartil; contém os 50% centrais dos dados;</li>
+<li><b>Altura da caixa</b> — a amplitude interquartil (IQR = Q3 − Q1);</li>
+<li><b>Hastes (<i>whiskers</i>)</b> — vão até o valor mais extremo dentro de 1,5 × IQR;</li>
+<li><b>Pontos isolados</b> — candidatos a <b>valores atípicos</b>.</li>
+</ul>
+</div>
+
+Os números por trás do desenho:
+
+```{r box-numeros, exercise=TRUE}
+companhia |>
+  summarise(
+    minimo  = min(salario),
+    Q1      = quantile(salario, 0.25),
+    mediana = median(salario),
+    Q3      = quantile(salario, 0.75),
+    maximo  = max(salario),
+    IQR     = IQR(salario)
+  )
+```
+
+```{r box-numeros-hint}
+# Compare com o resultado de: fivenum(companhia$salario)
+# e de: summary(companhia$salario)
+```
+
+### 👥 Boxplots comparativos entre grupos
+
+É aqui que o boxplot brilha: comparar distribuições lado a lado.
+
+```{r box-grupo, exercise=TRUE}
+ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_boxplot(alpha = 0.6, show.legend = FALSE) +
+  scale_fill_manual(values = paleta5) +
+  labs(
+    title = "Salário segundo o grau de instrução",
+    x = "Grau de instrução",
+    y = "Salário (SM)"
+  )
+```
+
+<div class="caixa dica">
+<b>O que este gráfico diz.</b> As três caixas estão em alturas diferentes: o
+salário tende a crescer com a instrução. Mas as caixas também se <b>sobrepõem</b>,
+ou seja, há funcionários do ensino médio ganhando mais do que alguns do superior.
+Tendência de grupo não determina o caso individual.
+</div>
+
+### 🔵 Boxplot + pontos: mostrando os dados de verdade
+
+Com amostras pequenas (aqui, n = 36), o boxplot sozinho pode esconder que há
+**pouquíssimas** observações em um grupo. Sobrepor os pontos resolve:
+
+```{r box-jitter, exercise=TRUE}
+set.seed(1)
+ggplot(companhia, aes(x = grau, y = salario)) +
+  geom_boxplot(fill = "grey92", outlier.shape = NA) +
+  geom_jitter(width = 0.12, size = 2.2, alpha = 0.7, color = cor_azul) +
+  labs(
+    title = "Boxplot com os dados individuais sobrepostos",
+    subtitle = "Cada ponto é um funcionário",
+    x = "Grau de instrução", y = "Salário (SM)"
+  )
+```
+
+<div class="caixa professor">
+<b>Nota ao professor.</b> Este é um bom momento para discutir tamanho de amostra
+em sala. Peça que os estudantes contem os pontos do grupo <code>superior</code>. A
+percepção de que "a caixa parecia sólida, mas são poucos casos" costuma ser um
+divisor de águas na leitura crítica de gráficos.
+</div>
+
+### ✏️ Exercício — boxplot por procedência
+
+Compare a distribuição de `salario` entre as categorias de `procedencia`.
+
+```{r ex-box, exercise=TRUE, exercise.lines=9}
+ggplot(companhia, aes(x = _____, y = _____)) +
+  geom_boxplot(fill = cor_verde, alpha = 0.5) +
+  labs(
+    title = "Salário por procedência",
+    x = "Procedência",
+    y = "Salário (SM)"
+  )
+```
+
+```{r ex-box-hint}
+# No eixo x vai a variável de grupo (qualitativa): procedencia
+# No eixo y vai a variável numérica: salario
+```
+
+```{r ex-box-solution}
+ggplot(companhia, aes(x = procedencia, y = salario)) +
+  geom_boxplot(fill = cor_verde, alpha = 0.5) +
+  labs(
+    title = "Salário por procedência",
+    x = "Procedência",
+    y = "Salário (SM)"
+  )
+```
+
+### 🧠 Quiz — boxplots
+
+```{r quiz-box, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Qual medida a **caixa** do boxplot representa?",
+    answer("A amplitude interquartil (do Q1 ao Q3), que contém os 50% centrais", correct = TRUE),
+    answer("A média mais ou menos um desvio padrão", message = "O boxplot não usa média nem desvio padrão."),
+    answer("O intervalo total dos dados", message = "Esse é o intervalo entre mínimo e máximo."),
+    answer("O intervalo de confiança da média", message = "Isso exigiria inferência, não estatística descritiva."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Um ponto isolado apareceu acima da haste superior. O que fazer?",
+    answer("Investigar: pode ser erro de digitação, caso legítimo e raro, ou informação valiosa", correct = TRUE),
+    answer("Excluir imediatamente da base", message = "Excluir sem investigar é uma das piores práticas em análise de dados."),
+    answer("Ignorar, porque o boxplot já o marcou", message = "A marcação é justamente um convite à investigação."),
+    answer("Refazer o gráfico até o ponto sumir", message = "Isso é maquiar o resultado."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 🌿 Gráfico de ramos e folhas
+
+O ramo-e-folhas (*stem-and-leaf*) é um "histograma que não perde os dados": ele
+mostra a forma da distribuição **e** os valores originais ao mesmo tempo. É
+feito à mão em sala de aula com muita frequência — e o R faz em uma linha.
+
+### 🍃 `stem()` em R base
+
+```{r stem1, exercise=TRUE}
+stem(companhia$salario)
+```
+
+<div class="caixa destaque">
+<b>Como ler.</b> À esquerda do <code>|</code> fica o <b>ramo</b> (a parte "grande" do
+número); à direita ficam as <b>folhas</b> (a parte "pequena"). Uma linha como<br>
+<code>1 | 023</code><br>
+representa os valores 10, 12 e 13. Vire a folha 90° e você tem um histograma —
+com a vantagem de ainda enxergar cada dado.
+</div>
+
+### 🔧 Controlando o detalhamento com `scale`
+
+O argumento `scale` funciona como o `bins` do histograma: aumenta ou diminui o
+número de ramos.
+
+```{r stem2, exercise=TRUE}
+# Mais compacto
+stem(companhia$salario, scale = 0.5)
+```
+
+```{r stem3, exercise=TRUE}
+# Mais detalhado
+stem(companhia$salario, scale = 2)
+```
+
+### 🔁 Comparando com o histograma
+
+```{r stem-hist, exercise=TRUE}
+stem(companhia$idade_anos)
+
+ggplot(companhia, aes(x = idade_anos)) +
+  geom_histogram(binwidth = 5, boundary = 20,
+                 fill = cor_roxo, color = "white") +
+  labs(title = "As mesmas idades, agora em histograma",
+       x = "Idade (anos completos)", y = "Frequência")
+```
+
+<div class="caixa dica">
+<b>Quando o ramo-e-folhas é melhor.</b> Amostras pequenas ou médias (até ~100
+observações), quando você quer <b>ver os valores</b>, detectar repetições, arredondamentos
+suspeitos (muitos números terminados em 0 ou 5) e erros de digitação. Para grandes
+volumes, o histograma vence.
+</div>
+
+### ✏️ Exercício — ramo-e-folhas das notas simuladas
+
+A base `turma` (120 estudantes simulados) também está disponível. Faça o
+ramo-e-folhas da coluna `nota`.
+
+```{r ex-stem, exercise=TRUE, exercise.lines=3}
+stem(turma$_____)
+```
+
+```{r ex-stem-hint}
+# O cifrão ($) acessa uma coluna: base$coluna
+# A coluna pedida se chama nota.
+```
+
+```{r ex-stem-solution}
+stem(turma$nota)
+```
+
+### 🧠 Quiz — ramo-e-folhas
+
+```{r quiz-stem, echo=FALSE}
+question(
+  "Qual é a principal vantagem do ramo-e-folhas sobre o histograma?",
+  answer("Ele mostra a forma da distribuição sem descartar os valores individuais", correct = TRUE),
+  answer("Ele funciona melhor com milhões de observações", message = "É justamente o contrário: ele se perde com muitos dados."),
+  answer("Ele calcula a média automaticamente", message = "Ele não calcula medidas-resumo."),
+  answer("Ele dispensa a escolha de agrupamento", message = "O `scale` faz o papel do agrupamento."),
+  correct     = "Correto!",
+  incorrect   = "Ainda não é essa.",
+  try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+  allow_retry = TRUE,
+  random_answer_order = TRUE
+)
+```
+
+## ⚖️ Simetria, dispersão e valores atípicos
+
+Descrever uma distribuição é responder a quatro perguntas:
+
+1. **Onde** ela está centrada?
+2. **Quão espalhada** ela é?
+3. Qual é a sua **forma** (simétrica? assimétrica? quantos picos?)
+4. Há **valores destoantes**?
+
+### ⚖️ Média × mediana: o detector de assimetria
+
+```{r simetria1, exercise=TRUE}
+companhia |>
+  summarise(
+    media      = mean(salario),
+    mediana    = median(salario),
+    diferenca  = mean(salario) - median(salario),
+    assimetria = assimetria(salario)
+  )
+```
+
+<div class="caixa destaque">
+<b>A regra.</b>
+<ul>
+<li>média &gt; mediana → indício de <b>assimetria à direita</b> (cauda para valores altos);</li>
+<li>média ≈ mediana → distribuição aproximadamente <b>simétrica</b>;</li>
+<li>média &lt; mediana → indício de <b>assimetria à esquerda</b>.</li>
+</ul>
+A regra é um <b>indício</b>, não uma prova. Sempre confirme com o gráfico.
+</div>
+
+Vejamos no gráfico:
+
+```{r simetria2, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_density(fill = cor_azul, alpha = 0.25, color = cor_azul, linewidth = 1) +
+  geom_vline(xintercept = mean(companhia$salario),
+             color = cor_laran, linewidth = 1.1) +
+  geom_vline(xintercept = median(companhia$salario),
+             color = cor_verde, linewidth = 1.1, linetype = "dashed") +
+  annotate("text", x = mean(companhia$salario) + 0.4, y = 0.075,
+           label = "média", color = cor_laran, hjust = 0, fontface = "bold") +
+  annotate("text", x = median(companhia$salario) - 0.4, y = 0.055,
+           label = "mediana", color = cor_verde, hjust = 1, fontface = "bold") +
+  labs(
+    title = "Média e mediana sobre a curva de densidade",
+    subtitle = "A média é puxada pela cauda direita; a mediana resiste",
+    x = "Salário (SM)", y = "Densidade"
+  )
+```
+
+### 🎭 Três formas típicas de distribuição
+
+```{r formas1, exercise=TRUE}
+ggplot(formas, aes(x = valor, fill = forma)) +
+  geom_density(alpha = 0.5, color = NA) +
+  facet_wrap(~ forma, scales = "free", ncol = 3) +
+  scale_fill_manual(values = paleta5, guide = "none") +
+  labs(
+    title = "Três formas que você vai encontrar o tempo todo",
+    x = "Valor", y = "Densidade"
+  )
+```
+
+```{r formas2, exercise=TRUE}
+formas |>
+  group_by(forma) |>
+  summarise(
+    media      = round(mean(valor), 2),
+    mediana    = round(median(valor), 2),
+    desvio     = round(sd(valor), 2),
+    assimetria = round(assimetria(valor), 2)
+  )
+```
+
+<div class="caixa dica">
+Repare como o coeficiente de assimetria acompanha o desenho: perto de <b>0</b> na
+simétrica, claramente <b>positivo</b> na assimétrica à direita. Na cauda longa, a
+média e a mediana quase coincidem, mas o <b>desvio padrão explode</b> — sinal de
+que poucos valores extremos dominam a medida.
+</div>
+
+### 📐 Medidas de dispersão
+
+Centro sem dispersão é meia informação. As principais medidas:
+
+```{r dispersao, exercise=TRUE}
+companhia |>
+  summarise(
+    amplitude     = max(salario) - min(salario),
+    variancia     = var(salario),
+    desvio_padrao = sd(salario),
+    IQR           = IQR(salario),
+    CV_percent    = 100 * sd(salario) / mean(salario)
+  ) |>
+  mutate(across(everything(), \(x) round(x, 2)))
+```
+
+| Medida | O que é | Característica |
+|:-------|:--------|:---------------|
+| Amplitude | máximo − mínimo | usa só 2 valores; muito instável |
+| Variância | média dos desvios ao quadrado | unidade **ao quadrado** |
+| Desvio padrão | raiz da variância | mesma unidade dos dados |
+| IQR | Q3 − Q1 | **robusto** a valores atípicos |
+| Coeficiente de variação | desvio padrão / média (em %) | **adimensional**: compara variáveis de unidades diferentes |
+
+<div class="caixa dica">
+<b>Para que serve o CV.</b> Faz sentido perguntar se o salário varia mais do que
+a idade? Em unidades originais, não — são coisas diferentes. Em percentual da
+média, sim. Compare os dois no bloco abaixo.
+</div>
+
+```{r cv, exercise=TRUE}
+companhia |>
+  summarise(
+    CV_salario = 100 * sd(salario) / mean(salario),
+    CV_idade   = 100 * sd(idade)   / mean(idade)
+  ) |>
+  mutate(across(everything(), \(x) round(x, 1)))
+```
+
+### 🚨 Valores atípicos e a regra 1,5 × IQR
+
+O critério usado pelo boxplot: é candidato a atípico todo valor **abaixo** de
+Q1 − 1,5 × IQR ou **acima** de Q3 + 1,5 × IQR.
+
+```{r outliers, exercise=TRUE}
+q1  <- quantile(companhia$salario, 0.25)
+q3  <- quantile(companhia$salario, 0.75)
+iqr <- q3 - q1
+
+limite_inferior <- q1 - 1.5 * iqr
+limite_superior <- q3 + 1.5 * iqr
+
+c(limite_inferior = limite_inferior, limite_superior = limite_superior)
+
+companhia |>
+  filter(salario < limite_inferior | salario > limite_superior) |>
+  select(registro, grau, salario, idade, procedencia)
+```
+
+<div class="caixa atencao">
+<b>Atípico não é sinônimo de erro.</b> Antes de qualquer decisão, pergunte:
+<ol>
+<li>é erro de digitação (um salário de 233,0 em vez de 23,3)?</li>
+<li>é caso legítimo e raro (o único diretor da amostra)?</li>
+<li>é o achado mais interessante da análise?</li>
+</ol>
+Excluir sem investigar é apagar evidência.
+</div>
+
+### 🏔️ Multimodalidade: quando há duas populações misturadas
+
+Um único pico sugere um grupo homogêneo. **Dois picos** quase sempre significam
+que há dois grupos diferentes dentro da mesma base.
+
+```{r mistura1, exercise=TRUE}
+ggplot(mistura, aes(x = tempo)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 30,
+                 fill = "grey80", color = "white") +
+  geom_density(color = cor_escur, linewidth = 1.2) +
+  labs(
+    title = "Tempo de deslocamento até o trabalho (600 pessoas)",
+    subtitle = "Um histograma com dois picos: o que está acontecendo?",
+    x = "Tempo (minutos)", y = "Densidade"
+  )
+```
+
+A média de tudo isso seria por volta de 40 minutos — um valor que **não descreve
+quase ninguém**. Separando pelo grupo, a explicação aparece:
+
+```{r mistura2, exercise=TRUE}
+ggplot(mistura, aes(x = tempo, fill = grupo)) +
+  geom_density(alpha = 0.5, color = NA) +
+  scale_fill_manual(values = c(cor_azul, cor_laran)) +
+  labs(
+    title = "A mesma variável, separada por turno",
+    subtitle = "Eram duas populações misturadas o tempo todo",
+    x = "Tempo (minutos)", y = "Densidade", fill = "Grupo"
+  )
+```
+
+<div class="caixa destaque">
+<b>Mensagem central da Análise Exploratória.</b> Medidas-resumo podem esconder
+estrutura. Antes de resumir, <b>desenhe</b>. E quando o desenho tiver dois picos,
+procure a variável que separa os grupos.
+</div>
+
+### ✏️ Exercício — outliers nas notas simuladas
+
+Aplique a regra 1,5 × IQR à variável `nota` da base `turma` e liste os casos
+atípicos.
+
+```{r ex-out, exercise=TRUE, exercise.lines=12}
+q1  <- quantile(turma$nota, 0.25)
+q3  <- quantile(turma$nota, _____)
+iqr <- q3 - q1
+
+turma |>
+  filter(nota < q1 - 1.5 * iqr | nota > q3 + _____ * iqr) |>
+  select(estudante, curso, horas, nota)
+```
+
+```{r ex-out-hint}
+# O terceiro quartil corresponde ao quantil 0.75.
+# O multiplicador da regra clássica do boxplot é 1.5.
+```
+
+```{r ex-out-solution}
+q1  <- quantile(turma$nota, 0.25)
+q3  <- quantile(turma$nota, 0.75)
+iqr <- q3 - q1
+
+turma |>
+  filter(nota < q1 - 1.5 * iqr | nota > q3 + 1.5 * iqr) |>
+  select(estudante, curso, horas, nota)
+```
+
+### 🧠 Quiz — forma, dispersão e atípicos
+
+```{r quiz-forma, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Em uma distribuição de salários, a média é 11,1 e a mediana é 10,2. O que isso sugere?",
+    answer("Assimetria à direita: alguns salários altos puxam a média para cima", correct = TRUE),
+    answer("Assimetria à esquerda", message = "Aí teríamos média menor que a mediana."),
+    answer("Distribuição perfeitamente simétrica", message = "Se fosse simétrica, média e mediana seriam praticamente iguais."),
+    answer("Erro no cálculo", message = "Média diferente de mediana é o caso mais comum na prática."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Qual medida de dispersão é a mais **robusta** à presença de valores extremos?",
+    answer("Amplitude interquartil (IQR)", correct = TRUE),
+    answer("Amplitude total", message = "É a mais sensível de todas: usa exatamente os dois extremos."),
+    answer("Variância", message = "Eleva os desvios ao quadrado, ampliando o efeito dos extremos."),
+    answer("Desvio padrão", message = "É a raiz da variância, e herda a mesma sensibilidade."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Um histograma apresenta dois picos bem separados. Qual é a interpretação mais provável?",
+    answer("A base mistura dois grupos com comportamentos diferentes", correct = TRUE),
+    answer("Foram usadas classes demais", message = "Ruído por excesso de classes gera muitos picos irregulares, não dois picos bem definidos."),
+    answer("Os dados estão errados", message = "Bimodalidade é um achado, não um defeito."),
+    answer("A média é igual à mediana", message = "Isso pode até ocorrer, mas não explica os dois picos."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Para comparar a variabilidade do salário com a da idade, qual medida é apropriada?",
+    answer("O coeficiente de variação, porque é adimensional", correct = TRUE),
+    answer("O desvio padrão de cada uma", message = "As unidades são diferentes (SM e anos): a comparação direta não faz sentido."),
+    answer("A variância de cada uma", message = "Mesmo problema, agravado pela unidade ao quadrado."),
+    answer("A amplitude de cada uma", message = "Também depende da unidade e é instável."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 📐 Gráficos matemáticos em R base
+
+Antes de mergulhar no `ggplot2`, vale uma parada nos gráficos do **R base**. Eles
+são rápidos, não exigem pacote nenhum e ajudam a entender a ponte entre
+**função matemática** e **dados observados**.
+
+### 🔢 Uma função é uma regra
+
+Se `f(x) = 2x + 3`, então cada entrada gera uma saída:
+
+```{r func1, exercise=TRUE}
+f <- function(x) {
+  2 * x + 3
+}
+
+f(1)
+f(4)
+
+# O R aplica a regra a um vetor inteiro de uma vez:
+x <- c(-2, -1, 0, 1, 2, 3)
+f(x)
+```
+
+### 📈 `plot()`, `lines()` e `curve()`
+
+```{r func2, exercise=TRUE}
+f <- function(x) 2 * x + 3
+
+x <- seq(-4, 4, by = 1)
+y <- f(x)
+
+plot(x, y, pch = 19, cex = 1.2, col = "#1f6aa5",
+     xlab = "x", ylab = "f(x)",
+     main = "Pontos gerados pela função")
+grid()
+```
+
+```{r func3, exercise=TRUE}
+f <- function(x) 2 * x + 3
+
+curve(f(x), from = -4, to = 4, lwd = 2, col = "#1f6aa5",
+      xlab = "x", ylab = "f(x)", main = "A mesma função com curve()")
+grid()
+abline(h = 0, v = 0, lty = 2, col = "gray50")
+```
+
+<div class="caixa dica">
+<b>Regra prática.</b> Se você tem uma <b>expressão matemática</b>,
+<code>curve()</code> é o caminho mais curto. Se você já tem <b>vetores de dados</b>,
+use <code>plot()</code> e <code>lines()</code>.
+</div>
+
+### 🎢 Curvatura, domínio e oscilação
+
+```{r func4, exercise=TRUE}
+h <- function(x) x^2 - 4 * x + 3
+
+curve(h(x), from = -1, to = 5, lwd = 2, col = "#9c36b5",
+      xlab = "x", ylab = "h(x)", main = "Parábola com vértice destacado")
+grid()
+abline(h = 0, v = 0, lty = 2, col = "gray50")
+
+xv <- 2            # -b / (2a)
+yv <- h(xv)
+points(xv, yv, pch = 19, col = "#f08c00", cex = 1.6)
+text(xv, yv, labels = " vértice", pos = 4, col = "#f08c00")
+```
+
+```{r func5, exercise=TRUE}
+# Três comportamentos em um painel
+par(mfrow = c(1, 3))
+
+curve(sqrt(x - 2), from = 2, to = 10, lwd = 2, col = "#1f6aa5",
+      main = "Domínio restrito", ylab = "raiz(x-2)")
+curve(2^x, from = -3, to = 4, lwd = 2, col = "#2b8a3e",
+      main = "Crescimento exponencial", ylab = "2^x")
+curve(sin(x), from = -2*pi, to = 2*pi, lwd = 2, col = "#f08c00",
+      main = "Oscilação periódica", ylab = "sen(x)")
+
+par(mfrow = c(1, 1))
+```
+
+### 🌉 Da curva teórica aos dados observados
+
+Esta é a ponte entre a Matemática e a Estatística. Na Matemática a curva vem
+primeiro; na Estatística vêm os **dados**, e a curva é uma tentativa de descrevê-los.
+
+```{r func6, exercise=TRUE}
+set.seed(123)
+
+x <- 1:30
+y <- 2 + 0.8 * x + rnorm(30, mean = 0, sd = 2)
+
+plot(x, y, pch = 19, col = "#16324f",
+     xlab = "x", ylab = "y",
+     main = "Dados observados e reta ajustada")
+grid()
+
+modelo <- lm(y ~ x)
+abline(modelo, col = "#f08c00", lwd = 2)
+```
+
+<div class="caixa destaque">
+Os pontos <b>não</b> ficam sobre a reta — e está tudo certo. A diferença entre
+<b>padrão</b> e <b>variabilidade</b> é o coração da Estatística.
+</div>
+
+### 🔔 Sobrepondo uma curva teórica ao histograma
+
+Um uso muito comum do R base: comparar a distribuição observada com uma curva
+Normal de mesma média e mesmo desvio padrão.
+
+```{r func7, exercise=TRUE}
+salarios <- companhia$salario
+
+hist(salarios, breaks = 8, probability = TRUE,
+     col = "#dbe7f3", border = "white",
+     xlab = "Salário (SM)", ylab = "Densidade",
+     main = "Salários e curva Normal de referência")
+
+curve(dnorm(x, mean = mean(salarios), sd = sd(salarios)),
+      add = TRUE, lwd = 2, col = "#f08c00")
+
+lines(density(salarios), lwd = 2, lty = 2, col = "#2b8a3e")
+
+legend("topright", bty = "n", lwd = 2, lty = c(1, 2),
+       col = c("#f08c00", "#2b8a3e"),
+       legend = c("Normal teórica", "Densidade observada"))
+```
+
+<div class="caixa dica">
+A curva laranja é o que se esperaria se os salários fossem Normais. A verde é o
+que os dados de fato mostram. O desencontro entre elas — a observada mais
+"puxada" para a direita — é a assimetria que já tínhamos detectado pela
+comparação entre média e mediana.
+</div>
+
+### ✏️ Exercício — desenhe uma função
+
+Use `curve()` para desenhar `g(x) = -x^2 + 6x - 5` no intervalo de 0 a 6.
+
+```{r ex-func, exercise=TRUE, exercise.lines=7}
+g <- function(x) _____
+
+curve(g(x), from = _____, to = _____, lwd = 2, col = "#2b8a3e",
+      xlab = "x", ylab = "g(x)", main = "Uma parábola de boca para baixo")
+grid()
+```
+
+```{r ex-func-hint}
+# A expressão em R fica: -x^2 + 6*x - 5
+# O intervalo pedido vai de 0 até 6.
+```
+
+```{r ex-func-solution}
+g <- function(x) -x^2 + 6*x - 5
+
+curve(g(x), from = 0, to = 6, lwd = 2, col = "#2b8a3e",
+      xlab = "x", ylab = "g(x)", main = "Uma parábola de boca para baixo")
+grid()
+```
+
+### 🧠 Quiz — R base
+
+```{r quiz-base, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Você tem a expressão matemática de uma função e quer desenhá-la. Qual função é mais direta?",
+    answer("`curve()`", correct = TRUE),
+    answer("`hist()`", message = "`hist()` desenha histogramas a partir de dados."),
+    answer("`table()`", message = "`table()` faz tabelas de frequência."),
+    answer("`barplot()`", message = "`barplot()` desenha barras a partir de contagens."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Por que os pontos de um gráfico de dispersão raramente ficam exatamente sobre a reta ajustada?",
+    answer("Porque dados reais apresentam variabilidade além do padrão médio", correct = TRUE),
+    answer("Porque o R arredonda os valores", message = "O arredondamento é irrelevante nessa escala."),
+    answer("Porque a reta está errada", message = "A reta descreve a tendência, não cada caso."),
+    answer("Porque faltam dados", message = "Mesmo com todos os dados, a variabilidade permanece."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 🧩 `ggplot2` na prática
+
+O `ggplot2` implementa a **Gramática dos Gráficos**: em vez de pedir "faça um
+gráfico de barras", você **descreve** o gráfico por camadas.
+
+### 📚 As sete peças da gramática
+
+| Peça | Pergunta que responde | Função típica |
+|:-----|:----------------------|:--------------|
+| **Dados** | quais dados? | `ggplot(dados, ...)` |
+| **Aesthetics** | o que vai em cada eixo, cor, forma, tamanho? | `aes(x =, y =, fill =)` |
+| **Geometrias** | que forma o dado assume na tela? | `geom_bar()`, `geom_point()` |
+| **Estatísticas** | há algum resumo antes de desenhar? | `stat_summary()`, `after_stat()` |
+| **Facetas** | dividir em painéis por grupo? | `facet_wrap()` |
+| **Coordenadas** | que sistema de coordenadas? | `coord_flip()`, `coord_polar()` |
+| **Tema** | qual a aparência geral? | `theme_minimal()` |
+
+<div class="caixa destaque">
+Todo gráfico é montado com <code>+</code>, como peças de um quebra-cabeça:<br><br>
+<code>ggplot(dados, aes(...))</code> → a tela e os eixos<br>
+<code>+ geom_*()</code> → a forma<br>
+<code>+ labs()</code> → os títulos<br>
+<code>+ theme_*()</code> → o acabamento
+</div>
+
+### 🧩 Peça 1 — a tela em branco
+
+```{r gg1, exercise=TRUE}
+ggplot(companhia, aes(x = idade, y = salario))
+```
+
+Os eixos existem, mas nada foi desenhado: falta a **geometria**.
+
+### 🧩 Peça 2 — a geometria
+
+```{r gg2, exercise=TRUE}
+ggplot(companhia, aes(x = idade, y = salario)) +
+  geom_point()
+```
+
+### 🧩 Peça 3 — mais uma estética (cor)
+
+```{r gg3, exercise=TRUE}
+ggplot(companhia, aes(x = idade, y = salario, color = grau)) +
+  geom_point(size = 3, alpha = 0.85)
+```
+
+### 🧩 Peça 4 — uma camada estatística
+
+```{r gg4, exercise=TRUE}
+ggplot(companhia, aes(x = idade, y = salario)) +
+  geom_point(size = 3, alpha = 0.7, color = cor_azul) +
+  geom_smooth(method = "lm", se = FALSE, color = cor_laran)
+```
+
+### 🧩 Peça 5 — títulos, escalas e tema
+
+```{r gg5, exercise=TRUE}
+ggplot(companhia, aes(x = idade, y = salario)) +
+  geom_point(size = 3, alpha = 0.75, color = cor_azul) +
+  geom_smooth(method = "lm", se = FALSE, color = cor_laran, linewidth = 1) +
+  scale_y_continuous(labels = label_number(suffix = " SM")) +
+  labs(
+    title    = "Salário e idade na Companhia MB",
+    subtitle = "Cada ponto é um funcionário; a linha mostra a tendência linear",
+    caption  = "Fonte: dados/dados_companhia.csv (n = 36)",
+    x = "Idade (anos)",
+    y = "Salário"
+  ) +
+  theme_light(base_size = 13)
+```
+
+🎉 **Quebra-cabeça completo.** Cada `+` acrescentou exatamente uma ideia.
+
+### 🎨 Painel de possibilidades
+
+O mesmo verbo, geometrias diferentes. Rode cada bloco e compare.
+
+```{r gg-panel1, exercise=TRUE}
+# Barras: variável qualitativa
+ggplot(companhia, aes(x = grau, fill = grau)) +
+  geom_bar(show.legend = FALSE) +
+  scale_fill_manual(values = paleta5) +
+  labs(title = "geom_bar()", x = "Grau", y = "Frequência")
+```
+
+```{r gg-panel2, exercise=TRUE}
+# Histograma: variável quantitativa
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(bins = 8, fill = cor_azul, color = "white") +
+  labs(title = "geom_histogram()", x = "Salário (SM)", y = "Frequência")
+```
+
+```{r gg-panel3, exercise=TRUE}
+# Densidade: a forma suavizada
+ggplot(companhia, aes(x = salario, fill = grau)) +
+  geom_density(alpha = 0.45, color = NA) +
+  scale_fill_manual(values = paleta5) +
+  labs(title = "geom_density() por grupo", x = "Salário (SM)",
+       y = "Densidade", fill = "Grau")
+```
+
+```{r gg-panel4, exercise=TRUE}
+# Boxplot + violino: resumo e forma juntos
+ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_violin(alpha = 0.35, color = NA, trim = FALSE) +
+  geom_boxplot(width = 0.18, alpha = 0.9, show.legend = FALSE) +
+  scale_fill_manual(values = paleta5, guide = "none") +
+  labs(title = "geom_violin() + geom_boxplot()",
+       x = "Grau", y = "Salário (SM)")
+```
+
+### 🪟 Facetas: um painel por grupo
+
+```{r gg-facet, exercise=TRUE}
+ggplot(companhia, aes(x = salario)) +
+  geom_histogram(binwidth = 3, boundary = 3,
+                 fill = cor_verde, color = "white") +
+  facet_wrap(~ procedencia) +
+  labs(
+    title = "Distribuição do salário por procedência",
+    subtitle = "facet_wrap() repete o mesmo gráfico para cada grupo",
+    x = "Salário (SM)", y = "Frequência"
+  )
+```
+
+<div class="caixa dica">
+<b>Facetas ou cores?</b> Use <b>cor</b> quando quiser comparar grupos sobrepostos
+(2 ou 3 grupos). Use <b>facetas</b> quando houver mais grupos ou quando a
+sobreposição virar bagunça visual.
+</div>
+
+### 🖌️ Temas e paletas
+
+O mesmo gráfico com acabamentos diferentes:
+
+```{r gg-temas, exercise=TRUE}
+base <- ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.75) +
+  labs(x = "Grau", y = "Salário (SM)")
+
+base + theme_minimal() + labs(title = "theme_minimal()")
+```
+
+```{r gg-temas2, exercise=TRUE}
+base <- ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.75) +
+  labs(x = "Grau", y = "Salário (SM)")
+
+base + theme_light() + scale_fill_brewer(palette = "Set2") +
+  labs(title = "theme_light() + paleta Set2 (ColorBrewer)")
+```
+
+```{r gg-temas3, exercise=TRUE}
+base <- ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.75) +
+  labs(x = "Grau", y = "Salário (SM)")
+
+base + theme_classic() + scale_fill_viridis_d(option = "D", end = 0.85) +
+  labs(title = "theme_classic() + paleta viridis")
+```
+
+<div class="caixa atencao">
+<b>Acessibilidade.</b> Cerca de 8% dos homens têm alguma dificuldade em
+distinguir cores. Paletas como a <code>viridis</code> foram desenhadas para
+continuar legíveis nesses casos — e também em impressão preto e branco. Prefira-as
+a paletas escolhidas apenas por gosto.
+</div>
+
+### 💾 Salvando o gráfico
+
+```{r gg-save, exercise=TRUE}
+grafico <- ggplot(companhia, aes(x = grau, y = salario, fill = grau)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.8) +
+  scale_fill_manual(values = paleta5) +
+  labs(title = "Salário por grau de instrução",
+       x = "Grau", y = "Salário (SM)")
+
+# ggsave grava o arquivo na pasta do projeto:
+# ggsave("figuras/boxplot_salario.png", grafico,
+#        width = 7, height = 4.5, dpi = 300)
+
+grafico
+```
+
+### ✏️ Desafio final — monte o gráfico completo
+
+Construa um **boxplot comparativo** do `salario` por `estado_civil`, com título,
+rótulos de eixo e tema minimalista.
+
+```{r ex-gg, exercise=TRUE, exercise.lines=12}
+ggplot(companhia, aes(x = _____, y = _____, fill = estado_civil)) +
+  _____(show.legend = FALSE, alpha = 0.7) +
+  scale_fill_manual(values = paleta5) +
+  labs(
+    title = "Salário segundo o estado civil",
+    x = "Estado civil",
+    y = "Salário (SM)"
+  ) +
+  theme_minimal()
+```
+
+```{r ex-gg-hint}
+# No eixo x vai a variável de grupo: estado_civil
+# No eixo y vai a variável numérica: salario
+# A geometria do boxplot se chama geom_boxplot()
+```
+
+```{r ex-gg-solution}
+ggplot(companhia, aes(x = estado_civil, y = salario, fill = estado_civil)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.7) +
+  scale_fill_manual(values = paleta5) +
+  labs(
+    title = "Salário segundo o estado civil",
+    x = "Estado civil",
+    y = "Salário (SM)"
+  ) +
+  theme_minimal()
+```
+
+### 🧪 Mini-projeto (para levar para casa)
+
+<div class="caixa ponte">
+<b>Roteiro de uma análise exploratória mínima.</b> Escolha uma variável
+qualitativa e uma quantitativa da base <code>companhia</code> e produza:
+<ol>
+<li>uma tabela de frequências da qualitativa;</li>
+<li>um gráfico adequado para ela;</li>
+<li>medidas-resumo da quantitativa (centro e dispersão);</li>
+<li>um histograma <b>e</b> um boxplot da quantitativa;</li>
+<li>um boxplot comparativo cruzando as duas;</li>
+<li>três frases de interpretação: centro, dispersão e forma.</li>
+</ol>
+</div>
+
+```{r mini-projeto, exercise=TRUE, exercise.lines=16}
+# Espaço livre: escreva aqui a sua análise
+companhia |>
+  count(procedencia) |>
+  mutate(prop = n / sum(n))
+```
+
+### 🧠 Quiz — gramática dos gráficos
+
+```{r quiz-gg, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "No `ggplot2`, o que a função `aes()` faz?",
+    answer("Mapeia variáveis dos dados para elementos visuais (eixos, cor, forma, tamanho)", correct = TRUE),
+    answer("Escolhe o tema do gráfico", message = "Isso é papel das funções `theme_*()`."),
+    answer("Desenha as barras", message = "Quem desenha são as funções `geom_*()`."),
+    answer("Importa os dados", message = "A importação é feita pelo `readr`."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Qual código produz um histograma da variável `salario`?",
+    answer("`ggplot(companhia, aes(x = salario)) + geom_histogram()`", correct = TRUE),
+    answer("`ggplot(companhia, aes(x = salario)) + geom_bar()`", message = "`geom_bar()` conta categorias; para uma contínua use `geom_histogram()`."),
+    answer("`ggplot(companhia) + histogram(salario)`", message = "Essa função não existe no ggplot2."),
+    answer("`hist(companhia, salario)`", message = "Sintaxe inválida; `hist()` é de R base e recebe um vetor."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Você quer o mesmo histograma repetido para cada procedência, em painéis separados. O que usar?",
+    answer("`facet_wrap(~ procedencia)`", correct = TRUE),
+    answer("`coord_flip()`", message = "Isso apenas troca os eixos de lugar."),
+    answer("`theme_minimal()`", message = "Isso só muda a aparência."),
+    answer("`scale_fill_manual()`", message = "Isso define as cores de preenchimento."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Por que preferir paletas como a `viridis`?",
+    answer("Porque continuam legíveis para pessoas com daltonismo e em impressão preto e branco", correct = TRUE),
+    answer("Porque deixam o gráfico mais colorido", message = "Quantidade de cor não é qualidade de comunicação."),
+    answer("Porque são as únicas disponíveis no ggplot2", message = "Há muitas paletas disponíveis."),
+    answer("Porque reduzem o tamanho do arquivo", message = "A paleta não afeta o tamanho do arquivo de forma relevante."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 🌐 Git e GitHub
+
+Você acabou de produzir análises, gráficos e um material de aula. Como guardar
+isso com segurança, acompanhar o que mudou e compartilhar com colegas e
+estudantes? Essa é a função do **Git** e do **GitHub**.
+
+### 😱 O problema que o Git resolve
+
+<div class="caixa atencao">
+Você conhece esta pasta:<br><br>
+<code>aula_final.Rmd</code><br>
+<code>aula_final_v2.Rmd</code><br>
+<code>aula_final_v2_CORRIGIDO.Rmd</code><br>
+<code>aula_final_v2_CORRIGIDO_agora_vai.Rmd</code><br><br>
+Qual é a versão boa? O que mudou de uma para a outra? E se você quiser voltar
+para a de terça-feira?
+</div>
+
+<div class="caixa destaque">
+<b>Git</b> é um sistema de <b>controle de versão</b>: ele guarda o histórico
+completo do seu projeto, com data, autor e descrição de cada mudança. Você mantém
+<b>um arquivo só</b> e o histórico fica registrado por baixo.<br><br>
+<b>GitHub</b> é um <b>site</b> que hospeda repositórios Git na internet: funciona
+como cópia de segurança, vitrine do trabalho e espaço de colaboração.
+</div>
+
+<div class="caixa dica">
+<b>Por que isso importa para quem dá aula.</b>
+<ul>
+<li><b>Segurança</b> — o notebook pode quebrar; o repositório na nuvem, não;</li>
+<li><b>Histórico</b> — dá para recuperar a versão de qualquer data;</li>
+<li><b>Colaboração</b> — dois professores editam o mesmo material sem sobrescrever um ao outro;</li>
+<li><b>Reprodutibilidade</b> — quem clonar o repositório roda o mesmo código e obtém o mesmo gráfico;</li>
+<li><b>Distribuição</b> — os estudantes baixam o material com um comando.</li>
+</ul>
+</div>
+
+### 🗣️ Vocabulário mínimo
+
+| Termo | O que significa, em português claro |
+|:------|:------------------------------------|
+| **Repositório** | a pasta do projeto, com todo o histórico junto |
+| **`git init`** | "transforme esta pasta em um repositório" |
+| **`git status`** | "o que mudou desde a última vez?" |
+| **`git add`** | "quero incluir estes arquivos no próximo registro" |
+| **`commit`** | uma foto do projeto num instante, com uma mensagem descritiva |
+| **`push`** | "envie meus commits para o GitHub" |
+| **`pull`** | "traga para cá o que mudou no GitHub" |
+| **`clone`** | "baixe para o meu computador uma cópia completa deste repositório" |
+| **`.gitignore`** | lista de arquivos que o Git deve **ignorar** |
+
+<div class="caixa ponte">
+<b>Uma analogia.</b> O <b>commit</b> é como salvar um jogo: você grava um ponto
+ao qual pode voltar. O <b>push</b> é subir esse save para a nuvem. O <b>clone</b> é
+baixar o jogo inteiro, com todos os saves, em outro computador.
+</div>
+
+### 🔁 O fluxo diário de trabalho
+
+<div class="caixa destaque" style="text-align:center; font-size:1.05em;">
+<b>pull</b> → editar → salvar → <b>add</b> → <b>commit</b> → <b>push</b>
+</div>
+
+```bash
+# 1. Antes de começar: traga o que houver de novo
+git pull
+
+# 2. ... você edita seus arquivos no RStudio ...
+
+# 3. Veja o que mudou
+git status
+
+# 4. Selecione o que entra no registro
+git add .
+
+# 5. Registre a versão, com mensagem clara
+git commit -m "adiciona boxplot de salario por grau"
+
+# 6. Envie para o GitHub
+git push
+
+# Em qualquer momento, veja o histórico:
+git log --oneline
+```
+
+<div class="caixa dica">
+<b>Boas mensagens de commit</b> descrevem o <i>que</i> mudou, no imperativo e em
+poucas palavras:<br>
+✅ <code>corrige leitura do arquivo txt</code> &nbsp;&nbsp; ✅ <code>adiciona secao de boxplots</code><br>
+❌ <code>alteracoes</code> &nbsp;&nbsp; ❌ <code>asdf</code> &nbsp;&nbsp; ❌ <code>final final agora vai</code>
+</div>
+
+### ⚙️ Configuração inicial (uma vez só por computador)
+
+```bash
+git --version
+
+git config --global user.name  "Seu Nome"
+git config --global user.email "seu_email@exemplo.com"
+
+git config --global init.defaultBranch main
+git config --global core.autocrlf true      # Windows
+
+git config --global --list
+```
+
+<div class="caixa atencao">
+Use o <b>mesmo e-mail</b> cadastrado no GitHub. É por ele que o site reconhece
+que os commits são seus.
+</div>
+
+### 🚫 O `.gitignore` de um projeto R
+
+Nem tudo deve ser versionado. Arquivos temporários do R, dados sensíveis e
+saídas geradas automaticamente ficam de fora. Este é o `.gitignore` criado
+nesta pasta:
+
+```bash
+# --- R / RStudio ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# --- Saidas geradas automaticamente ---
+*_cache/
+*_files/
+rsconnect/
+figuras/
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+~$*
+```
+
+<div class="caixa atencao">
+<b>Nunca versione</b> senhas, tokens, chaves de API, CPF ou qualquer dado pessoal
+identificável. O histórico do Git é permanente: apagar o arquivo depois <b>não</b>
+apaga o que já foi enviado.
+</div>
+
+### 🛠️ O que foi feito nesta pasta (comandos reais)
+
+Esta própria pasta do minicurso foi versionada e publicada no GitHub. Estes são
+exatamente os comandos usados — você pode repeti-los em qualquer projeto seu:
+
+```bash
+# 1. Transformar a pasta em repositorio Git
+cd VisualizacaoDados
+git init -b main
+
+# 2. Criar o .gitignore (conteudo mostrado acima)
+
+# 3. Registrar o primeiro commit com todos os arquivos
+git add .
+git commit -m "primeira versao do minicurso de visualizacao de dados"
+
+# 4. Criar o repositorio publico no GitHub e enviar
+#    (opcao A - com o GitHub CLI ja autenticado)
+gh repo create VisualizacaoDados --public --source=. --remote=origin --push
+
+#    (opcao B - criando o repositorio manualmente em github.com)
+# git remote add origin https://github.com/SEU_USUARIO/VisualizacaoDados.git
+# git push -u origin main
+```
+
+<div class="caixa dica">
+<b>Opção A ou B?</b> A <b>opção A</b> usa o <a href="https://cli.github.com/">GitHub
+CLI</a> (<code>gh</code>), que cria o repositório e configura tudo em um comando —
+basta ter feito <code>gh auth login</code> uma vez. A <b>opção B</b> funciona
+sempre: você cria o repositório no site (botão <b>New repository</b>) e depois
+conecta a pasta local a ele.
+</div>
+
+### 🖱️ O mesmo fluxo pelo RStudio (sem terminal)
+
+<div class="caixa neutro">
+<ol>
+<li><b>File → New Project → Version Control → Git</b>, e cole a URL do repositório para <b>clonar</b>;</li>
+<li>a aba <b>Git</b> aparece no painel superior direito;</li>
+<li>marque a caixinha <b>Staged</b> dos arquivos alterados (equivale ao <code>git add</code>);</li>
+<li>clique em <b>Commit</b>, escreva a mensagem e confirme;</li>
+<li>clique em <b>Push</b> (seta verde para cima) para enviar ao GitHub;</li>
+<li>clique em <b>Pull</b> (seta azul para baixo) antes de começar a trabalhar.</li>
+</ol>
+</div>
+
+### 🧯 Problemas comuns
+
+| Problema | Solução rápida |
+|:---------|:---------------|
+| A aba Git não aparece no RStudio | O projeto precisa ter sido criado/aberto como projeto com Git |
+| `git: command not found` | Instalar o Git e reiniciar o RStudio |
+| Erro de autenticação no `push` | Refazer o login (`gh auth login`) ou configurar chave SSH |
+| Conflito de arquivo | Abrir o arquivo, escolher a versão correta, salvar, `add` e `commit` |
+| Arquivo grande demais | Adicionar ao `.gitignore`; o GitHub recusa arquivos acima de 100 MB |
+
+### 📎 Links essenciais
+
+- Git: <https://git-scm.com/downloads>
+- GitHub: <https://github.com/>
+- GitHub CLI: <https://cli.github.com/>
+- Happy Git with R (o melhor guia para usuários de R): <https://happygitwithr.com/>
+- Documentação do RStudio sobre controle de versão: <https://docs.posit.co/ide/user/ide/guide/tools/version-control.html>
+
+### 🧠 Quiz — Git e GitHub
+
+```{r quiz-git, echo=FALSE}
+quiz(
+  caption = "Checagem rápida",
+  question(
+    "Qual é a diferença entre Git e GitHub?",
+    answer("Git é o programa de controle de versão que roda no seu computador; GitHub é o site que hospeda os repositórios", correct = TRUE),
+    answer("São dois nomes para a mesma coisa", message = "São coisas diferentes: dá para usar Git sem nunca usar GitHub."),
+    answer("Git é pago e GitHub é gratuito", message = "Git é software livre; o GitHub tem plano gratuito."),
+    answer("Git serve para R e GitHub para Python", message = "Ambos são independentes da linguagem."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Você editou um arquivo e quer registrar essa versão no histórico local. Qual é a sequência correta?",
+    answer("`git add` e depois `git commit`", correct = TRUE),
+    answer("`git push` e depois `git commit`", message = "O `push` envia commits que já existem."),
+    answer("`git clone` e depois `git init`", message = "Esses comandos criam ou copiam repositórios, não registram mudanças."),
+    answer("`git status` e depois `git pull`", message = "`status` só informa; `pull` traz mudanças de fora."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Para que serve o arquivo `.gitignore`?",
+    answer("Listar arquivos e pastas que o Git não deve versionar", correct = TRUE),
+    answer("Guardar as senhas do projeto", message = "Jamais: senhas não entram em repositório algum."),
+    answer("Apagar arquivos do computador", message = "Ele não apaga nada, apenas ignora."),
+    answer("Definir quem pode acessar o repositório", message = "Permissões são configuradas no GitHub."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  question(
+    "Um colega quer usar o material deste minicurso no computador dele. O que ele deve fazer?",
+    answer("`git clone` da URL do repositório", correct = TRUE),
+    answer("`git init` na pasta vazia dele", message = "Isso criaria um repositório novo e vazio."),
+    answer("`git push` para o repositório", message = "`push` envia; ele quer receber."),
+    answer("`git commit -m 'baixar'`", message = "Commit registra mudanças locais."),
+    correct     = "Correto!",
+    incorrect   = "Ainda não é essa.",
+    try_again   = "Não foi dessa vez. Leia a dica e tente de novo.",
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+## 🏁 Encerramento
+
+<div class="caixa destaque">
+<b>O caminho que percorremos.</b><br>
+planilha → arquivo de texto → <code>read_csv()</code> → <code>dplyr</code> →
+tabela de frequências → gráfico → <b>interpretação</b> → repositório versionado.
+</div>
+
+### 📋 O que você aprendeu
+
+| Etapa | Ferramentas |
+|:------|:------------|
+| Importar | `read_csv()`, `read_csv2()`, `read_delim()`, `read_table()`, `read_excel()` |
+| Organizar | `select()`, `filter()`, `mutate()`, `count()`, `group_by()`, `summarise()` |
+| Frequências | `count()`, `cumsum()`, `geom_bar()`, `geom_col()`, `coord_polar()` |
+| Distribuições | `geom_histogram()`, `geom_density()`, `geom_boxplot()`, `stem()` |
+| Descrever | `mean()`, `median()`, `sd()`, `var()`, `IQR()`, regra 1,5 × IQR |
+| Gráficos matemáticos | `plot()`, `curve()`, `lines()`, `abline()` |
+| Gramática dos gráficos | `aes()`, `geom_*()`, `facet_wrap()`, `scale_*()`, `theme_*()` |
+| Versionar | `git init`, `add`, `commit`, `push`, `pull`, `clone`, `.gitignore` |
+
+### ✅ Checklist antes de publicar um gráfico
+
+<div class="caixa neutro">
+<ol>
+<li>O gráfico responde a uma <b>pergunta</b> estatística clara?</li>
+<li>O tipo de gráfico combina com o <b>tipo da variável</b>?</li>
+<li>As categorias estão em uma <b>ordem útil</b> (frequência ou ordem natural)?</li>
+<li>Título, eixos e <b>unidades</b> estão explícitos?</li>
+<li>O eixo de barras começa em <b>zero</b>?</li>
+<li>Você já checou <b>assimetria</b>, <b>caudas</b> e <b>valores atípicos</b>?</li>
+<li>As cores continuam legíveis em <b>preto e branco</b>?</li>
+<li>Alguém que não participou da análise <b>entenderia</b> o gráfico sozinho?</li>
+</ol>
+</div>
+
+### 🚀 Próximos passos
+
+<div class="caixa ponte">
+<ul>
+<li>Refaça este tutorial com <b>dados da sua área</b> — é o exercício que mais ensina;</li>
+<li>Explore <code>geom_line()</code> para séries temporais e <code>geom_tile()</code> para mapas de calor;</li>
+<li>Estude gráficos interativos com <code>plotly</code> e relatórios com <code>Quarto</code>;</li>
+<li>Publique seu material no GitHub e compartilhe o link com a turma.</li>
+</ul>
+</div>
+
+<div class="caixa professor">
+<b>Nota ao professor.</b> Para adaptar este tutorial a outra turma, basta trocar
+o arquivo em <code>dados/</code> e ajustar os nomes das variáveis no bloco
+<code>setup</code>. Toda a estrutura de exercícios e quizzes permanece funcionando.
+Uma sugestão de sequência em 3 horas: importação (30 min), organização (20 min),
+frequências e histogramas (40 min), boxplots e descrição (40 min), ggplot2 (30
+min), Git/GitHub (20 min).
+</div>
+
+### 📚 Para ir além
+
+- Wickham, H.; Çetinkaya-Rundel, M.; Grolemund, G. **R for Data Science** (2ª ed.) — <https://r4ds.hadley.nz/>
+- Wickham, H. **ggplot2: Elegant Graphics for Data Analysis** — <https://ggplot2-book.org/>
+- Tukey, J. W. *Exploratory Data Analysis*. Addison-Wesley, 1977.
+- Bussab, W. O.; Morettin, P. A. *Estatística Básica*. Saraiva. (origem dos dados da Companhia MB)
+- Healy, K. **Data Visualization: A Practical Introduction** — <https://socviz.co/>
+- From Data to Viz (qual gráfico usar?) — <https://www.data-to-viz.com/>
+- The R Graph Gallery — <https://r-graph-gallery.com/>
+
+<div class="caixa destaque" style="text-align:center;">
+<b>Obrigado por participar!</b><br>
+<span class="mini">Em Estatística, gráfico não é enfeite. Gráfico é uma forma de pensar.</span>
+</div>
+
+<div class="mini" style="text-align:center; margin-top:1.5rem;">
+Minicurso "Visualização de Dados no R" — IX Simpósio de Iniciação à Docência<br>
+Universidade Federal de Viçosa
+</div>

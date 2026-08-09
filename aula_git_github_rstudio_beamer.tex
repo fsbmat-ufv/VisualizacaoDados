@@ -1,0 +1,314 @@
+\documentclass[10pt,aspectratio=169]{beamer}
+
+% ------------------------------------------------------------
+% Aula prática: Git, GitHub e RStudio
+% Compilação: pdfLaTeX
+% ------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{UFVBlue}{HTML}{003A70}
+\definecolor{UFVGreen}{HTML}{2E7D32}
+\definecolor{CodeBg}{HTML}{F6F8FA}
+\definecolor{CodeFrame}{HTML}{D0D7DE}
+
+\setbeamercolor{title}{fg=white,bg=UFVBlue}
+\setbeamercolor{frametitle}{fg=white,bg=UFVBlue}
+\setbeamercolor{structure}{fg=UFVBlue}
+\setbeamercolor{block title}{fg=white,bg=UFVBlue}
+\setbeamercolor{block body}{bg=gray!5,fg=black}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=UFVBlue,
+  urlcolor=UFVBlue
+}
+
+\lstdefinestyle{terminal}{
+  backgroundcolor=\color{CodeBg},
+  frame=single,
+  rulecolor=\color{CodeFrame},
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+\lstset{style=terminal}
+
+\title[Git, GitHub e RStudio]{Conexão e Controle de Versão\\com Git, GitHub e RStudio}
+\subtitle{Aula prática, objetiva e mão na massa}
+\author{EST 100 / EST 150 -- Ciência de Dados}
+\institute{Universidade Federal de Viçosa}
+\date{\today}
+
+\begin{document}
+
+% ------------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Objetivo da aula}
+\large
+Ao final, cada estudante deverá conseguir:
+
+\vspace{0.4cm}
+\begin{itemize}
+  \item instalar e configurar o \textbf{Git};
+  \item conectar \textbf{GitHub} ao \textbf{RStudio};
+  \item criar/clonar um projeto versionado;
+  \item fazer o ciclo: \textbf{Pull} $\rightarrow$ editar $\rightarrow$ \textbf{Commit} $\rightarrow$ \textbf{Push}.
+\end{itemize}
+
+\vspace{0.4cm}
+\begin{block}{Ideia central}
+Controle de versão = histórico + segurança + colaboração + reprodutibilidade.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Instalar o necessário}
+\large
+\begin{itemize}
+  \item \textbf{Git}: \href{https://git-scm.com/downloads}{git-scm.com/downloads}
+  \item \textbf{GitHub}: \href{https://github.com/}{github.com}
+  \item \textbf{RStudio Desktop}: \href{https://posit.co/download/rstudio-desktop/}{posit.co/download/rstudio-desktop}
+\end{itemize}
+
+\vspace{0.35cm}
+\begin{block}{No Windows}
+Durante a instalação do Git, pode manter as opções padrão.\newline
+Depois, use o terminal \textbf{Git Bash} ou o terminal do RStudio.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}[fragile]{Configuração única do Git}
+No terminal do RStudio: \textbf{Tools} $\rightarrow$ \textbf{Terminal} $\rightarrow$ \textbf{New Terminal}
+
+\vspace{0.25cm}
+\begin{lstlisting}
+git --version
+
+git config --global user.name "Seu Nome"
+git config --global user.email "seu_email@exemplo.com"
+
+git config --global init.defaultBranch main
+git config --global core.autocrlf true
+
+git config --global --list
+\end{lstlisting}
+
+\vspace{0.15cm}
+\begin{itemize}
+  \item Use o mesmo e-mail cadastrado no GitHub.
+  \item \texttt{main} será o nome padrão do ramo principal.
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}[fragile]{Conectar GitHub por SSH}
+\textbf{1. Gerar chave SSH no terminal:}
+
+\begin{lstlisting}
+ssh-keygen -t ed25519 -C "seu_email@exemplo.com"
+\end{lstlisting}
+
+\textbf{2. Copiar a chave pública:}
+
+\begin{lstlisting}
+cat ~/.ssh/id_ed25519.pub
+\end{lstlisting}
+
+\textbf{3. Colar no GitHub:}
+
+\begin{itemize}
+  \item GitHub $\rightarrow$ \textbf{Settings}
+  \item \textbf{SSH and GPG keys}
+  \item \textbf{New SSH key}
+\end{itemize}
+
+\textbf{4. Testar:}
+
+\begin{lstlisting}
+ssh -T git@github.com
+\end{lstlisting}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Criar repositório no GitHub}
+\large
+No GitHub:
+
+\vspace{0.25cm}
+\begin{enumerate}
+  \item \textbf{New repository}
+  \item Nome: \texttt{est100-primeiro-projeto}
+  \item Marque: \textbf{Add a README file}
+  \item Adicione: \texttt{.gitignore} $\rightarrow$ \textbf{R}
+  \item License: opcional
+  \item \textbf{Create repository}
+\end{enumerate}
+
+\vspace{0.35cm}
+\begin{block}{Regra simples}
+Um projeto de análise de dados $=$ uma pasta $=$ um repositório.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Clonar no RStudio}
+\large
+No RStudio:
+
+\vspace{0.25cm}
+\begin{enumerate}
+  \item \textbf{File} $\rightarrow$ \textbf{New Project}
+  \item \textbf{Version Control}
+  \item \textbf{Git}
+  \item Cole a URL SSH do GitHub:
+\end{enumerate}
+
+\vspace{0.15cm}
+\begin{center}
+\texttt{git@github.com:usuario/repositorio.git}
+\end{center}
+
+\vspace{0.25cm}
+\begin{block}{Resultado esperado}
+O RStudio abre um projeto com a aba \textbf{Git} visível.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Fluxo diário de trabalho}
+\Large
+\begin{center}
+\textbf{Pull} $\rightarrow$ editar $\rightarrow$ salvar $\rightarrow$ \textbf{Stage} $\rightarrow$ \textbf{Commit} $\rightarrow$ \textbf{Push}
+\end{center}
+
+\vspace{0.4cm}
+\large
+Na aba \textbf{Git} do RStudio:
+
+\vspace{0.2cm}
+\begin{itemize}
+  \item \textbf{Pull}: baixa mudanças do GitHub.
+  \item \textbf{Stage}: escolhe o que entrará no registro.
+  \item \textbf{Commit}: grava uma versão local.
+  \item \textbf{Push}: envia para o GitHub.
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}[fragile]{Comandos essenciais}
+\begin{lstlisting}
+# Ver situacao atual
+git status
+
+# Baixar atualizacoes
+git pull
+
+# Adicionar arquivos
+git add .
+
+# Registrar versao
+git commit -m "mensagem curta e clara"
+
+# Enviar ao GitHub
+git push
+
+# Ver historico
+git log --oneline
+\end{lstlisting}
+
+\vspace{0.1cm}
+\begin{block}{Boa mensagem de commit}
+\texttt{corrige leitura dos dados} \quad ou \quad \texttt{adiciona grafico de dispersao}
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Boas práticas mínimas}
+\large
+\begin{itemize}
+  \item Faça \textbf{commit pequeno}: uma mudança por vez.
+  \item Nunca versione: senhas, tokens, CPF, dados sensíveis.
+  \item Use \texttt{.gitignore} para arquivos temporários.
+  \item Antes de começar: \textbf{Pull}.
+  \item Ao terminar: \textbf{Commit + Push}.
+  \item README deve explicar: objetivo, dados, scripts e saída.
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Problemas comuns}
+\large
+\begin{tabular}{@{}p{0.36\textwidth}p{0.56\textwidth}@{}}
+\toprule
+\textbf{Problema} & \textbf{Solução rápida} \\
+\midrule
+Aba Git não aparece & Verificar se o projeto foi criado com Git \\
+Git não encontrado & Reinstalar Git e reiniciar o RStudio \\
+Erro de autenticação & Conferir SSH key no GitHub \\
+Conflito de arquivo & Abrir, escolher versão correta, salvar e commitar \\
+Commit sem e-mail & Conferir \texttt{git config --global user.email} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Atividade prática em 20 minutos}
+\large
+\begin{enumerate}
+  \item Criar repositório no GitHub.
+  \item Clonar no RStudio.
+  \item Criar \texttt{analise.R}.
+  \item Escrever três linhas de código.
+  \item Commit: \texttt{primeira analise em R}.
+  \item Push.
+  \item Conferir no GitHub.
+\end{enumerate}
+
+\vspace{0.35cm}
+\begin{block}{Entrega}
+Enviar apenas o link do repositório.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Links essenciais}
+\large
+\begin{itemize}
+  \item Git: \href{https://git-scm.com/downloads}{git-scm.com/downloads}
+  \item Livro Pro Git: \href{https://git-scm.com/book/en/v2}{git-scm.com/book/en/v2}
+  \item GitHub Docs -- SSH: \href{https://docs.github.com/en/authentication/connecting-to-github-with-ssh}{docs.github.com/.../ssh}
+  \item GitHub Docs -- Git básico: \href{https://docs.github.com/en/get-started/git-basics}{docs.github.com/.../git-basics}
+  \item Posit/RStudio -- Version Control: \href{https://docs.posit.co/ide/user/ide/guide/tools/version-control.html}{docs.posit.co/.../version-control}
+  \item Happy Git with R: \href{https://happygitwithr.com/}{happygitwithr.com}
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}
+\centering
+\Huge Obrigado!
+
+\vspace{0.5cm}
+\Large Agora: abrir o RStudio e versionar o primeiro projeto.
+\end{frame}
+
+\end{document}

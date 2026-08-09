@@ -1,0 +1,411 @@
+---
+title: "🧩 Construindo Gráficos Peça por Peça"
+subtitle: "EST 100 — Introdução ao ggplot2, readr, data.table e dplyr"
+output:
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+    language: pt
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Base de dados simples e direta
+set.seed(42)
+n <- 120
+
+turma <- tibble(
+  nome      = paste0("Estudante_", 1:n),
+  curso     = sample(c("Ciência de Dados", "Computação", "Engenharia", "Economia"),
+                     n, replace = TRUE, prob = c(0.4, 0.25, 0.2, 0.15)),
+  horas     = round(pmax(0, rlnorm(n, log(5), 0.5)), 1),
+  nota      = round(pmin(100, pmax(0, 55 + 3*sqrt(horas) + rnorm(n, 0, 10))), 1),
+  habito    = sample(c("Antecipado", "Véspera", "Misto"),
+                     n, replace = TRUE, prob = c(0.30, 0.30, 0.40))
+)
+
+tutorial_options(exercise.timelimit = 60)
+```
+
+---
+
+## 👋 Bem-vindo!
+
+Neste tutorial você vai aprender a **visualizar dados com R** de um jeito bem simples — como montar um quebra-cabeça.
+
+Cada pedaço que você adiciona ao gráfico é uma **peça nova do quebra-cabeça**. No final, todas as peças juntas formam uma imagem completa!
+
+Você também vai conhecer três ferramentas poderosas do R:
+
+| Ferramenta | Para que serve |
+|:-----------|:---------------|
+| `readr` | **Abrir** arquivos de dados |
+| `dplyr` | **Transformar** os dados |
+| `ggplot2` | **Visualizar** os dados |
+
+> 💡 **Dica:** Clique em **"Run Code"** para rodar os exemplos. Clique em **"Next Topic"** para avançar.
+
+---
+
+## 📂 Parte 1 — Abrindo Dados com `readr`
+
+### O que é o `readr`?
+
+Imagine que seus dados estão guardados numa caixa (um arquivo `.csv`). O `readr` é a chave que **abre essa caixa** e traz os dados para dentro do R.
+
+```{r demo-readr, exercise=FALSE, echo=TRUE}
+# Normalmente você usaria:
+# turma <- read_csv("minha_turma.csv")
+
+# Aqui já temos a base "turma" carregada pra você!
+# Veja como ela parece:
+glimpse(turma)
+```
+
+### O que acabamos de ver?
+
+- `glimpse()` mostra um **resumo rápido** da base
+- Cada linha é um **estudante**
+- Cada coluna é uma **variável** (curso, nota, horas de estudo...)
+
+### ✏️ Pratique
+
+Rode o código abaixo para ver as primeiras linhas da base:
+
+```{r ex-readr, exercise=TRUE}
+# head() mostra as primeiras linhas
+head(turma)
+```
+
+```{r ex-readr-hint}
+# Tente também: tail(turma) para ver as últimas linhas
+# Ou: nrow(turma) para contar quantos estudantes existem
+```
+
+---
+
+## 🔧 Parte 2 — Transformando Dados com `dplyr`
+
+### O `dplyr` é seu canivete suíço
+
+O `dplyr` tem algumas funções-chave. Cada uma faz **uma coisa só**, mas juntas são muito poderosas!
+
+| Função | O que faz | Exemplo simples |
+|:-------|:----------|:----------------|
+| `filter()` | Filtra linhas | Só estudantes de Computação |
+| `select()` | Escolhe colunas | Só nome e nota |
+| `mutate()` | Cria coluna nova | Cria coluna "aprovado" |
+| `count()` | Conta categorias | Quantos por curso |
+| `summarise()` | Calcula resumos | Média das notas |
+| `group_by()` | Agrupa para calcular | Média por curso |
+
+### 🔍 Filtrando linhas
+
+```{r demo-filter, exercise=TRUE}
+# Mostre apenas estudantes com nota acima de 70
+turma |>
+  filter(nota > 70)
+```
+
+```{r demo-filter-hint}
+# Tente filtrar por curso:
+# turma |> filter(curso == "Computação")
+```
+
+### ✏️ Pratique — Filtrando
+
+Mude o código para mostrar só estudantes que estudam **na véspera**:
+
+```{r ex-filter, exercise=TRUE}
+turma |>
+  filter(habito == "Antecipado")   # <-- mude aqui!
+```
+
+```{r ex-filter-solution}
+turma |>
+  filter(habito == "Véspera")
+```
+
+---
+
+### 🔢 Contando categorias
+
+```{r demo-count, exercise=TRUE}
+# Quantos estudantes há em cada curso?
+turma |>
+  count(curso, sort = TRUE)
+```
+
+### ➕ Criando uma coluna nova com `mutate()`
+
+```{r demo-mutate, exercise=TRUE}
+# Vamos criar uma coluna que diz se o estudante foi aprovado (nota >= 60)
+turma |>
+  mutate(aprovado = ifelse(nota >= 60, "Sim", "Não")) |>
+  count(aprovado)
+```
+
+### 📊 Calculando médias por grupo
+
+```{r demo-group, exercise=TRUE}
+# Média da nota por curso
+turma |>
+  group_by(curso) |>
+  summarise(media_nota = mean(nota),
+            n_estudantes = n())
+```
+
+---
+
+## 🧩 Parte 3 — O Quebra-Cabeça do `ggplot2`
+
+### A ideia principal
+
+Todo gráfico do `ggplot2` é feito juntando **peças**. Cada peça tem um nome:
+
+```
+ggplot(dados, aes(x = ..., y = ...))   ← PEÇA 1: dados e eixos
+  + geom_bar()                          ← PEÇA 2: forma do gráfico
+  + labs(title = "...")                 ← PEÇA 3: títulos
+  + theme_minimal()                     ← PEÇA 4: visual/tema
+```
+
+Vamos montar cada peça devagar, como num quebra-cabeça!
+
+---
+
+### 🧩 Peça 1 — A Tela em Branco
+
+```{r p1, exercise=TRUE}
+# Peça 1: só a tela vazia com os eixos
+ggplot(turma, aes(x = curso))
+```
+
+Só temos os eixos. Falta a "forma" do gráfico!
+
+---
+
+### 🧩 Peça 1 + 2 — Adicionando a Geometria
+
+```{r p2, exercise=TRUE}
+# Peça 2: adicionamos geom_bar() para fazer as barras
+ggplot(turma, aes(x = curso)) +
+  geom_bar()
+```
+
+Agora temos barras! Mas está sem título e difícil de ler o eixo...
+
+---
+
+### 🧩 Peças 1 + 2 + 3 — Adicionando Títulos
+
+```{r p3, exercise=TRUE}
+# Peça 3: labs() adiciona título e nomes dos eixos
+ggplot(turma, aes(x = curso)) +
+  geom_bar() +
+  labs(
+    title   = "Quantos estudantes há em cada curso?",
+    x       = "Curso",
+    y       = "Quantidade de estudantes"
+  )
+```
+
+Melhorou! Agora vamos deixar mais bonito...
+
+---
+
+### 🧩 Todas as Peças Juntas!
+
+```{r p4, exercise=TRUE}
+# Peça 4: theme_minimal() deixa o visual mais limpo
+# coord_flip() vira o gráfico de lado (fica mais fácil ler os cursos)
+ggplot(turma, aes(x = curso)) +
+  geom_bar(fill = "#2c7fb8") +
+  coord_flip() +
+  labs(
+    title = "Quantos estudantes há em cada curso?",
+    x     = "Curso",
+    y     = "Quantidade de estudantes"
+  ) +
+  theme_minimal()
+```
+
+🎉 **Quebra-cabeça completo!** Cada `+` é uma nova peça encaixada.
+
+---
+
+### ✏️ Pratique — Monte seu próprio gráfico!
+
+Complete o código abaixo para fazer um gráfico de barras mostrando os **hábitos de estudo**:
+
+```{r ex-bar, exercise=TRUE}
+ggplot(turma, aes(x = _____ )) +    # <-- qual variável?
+  geom_bar() +
+  labs(title = "Hábitos de estudo da turma",
+       x = "Hábito",
+       y = "Quantidade")
+```
+
+```{r ex-bar-solution}
+ggplot(turma, aes(x = habito)) +
+  geom_bar() +
+  labs(title = "Hábitos de estudo da turma",
+       x = "Hábito",
+       y = "Quantidade")
+```
+
+---
+
+## 📊 Parte 4 — Gráficos para Números
+
+Até agora vimos gráficos para **categorias** (tipo de curso, hábito de estudo).
+
+Mas o que fazer quando a variável é um **número**, como a nota?
+
+---
+
+### 📦 Histograma — "Quantas notas em cada faixa?"
+
+```{r hist1, exercise=TRUE}
+ggplot(turma, aes(x = nota)) +
+  geom_histogram(bins = 12, fill = "#5b8c5a", color = "white") +
+  labs(
+    title = "Como as notas estão distribuídas?",
+    x     = "Nota",
+    y     = "Quantidade de estudantes"
+  ) +
+  theme_minimal()
+```
+
+> 💡 O histograma divide os valores em **faixas** e conta quantos há em cada faixa.
+
+### ✏️ Mude o número de barras
+
+Troque `bins = 12` por outros valores (tente `5`, `20`, `40`). O que muda?
+
+```{r ex-bins, exercise=TRUE}
+ggplot(turma, aes(x = nota)) +
+  geom_histogram(bins = 12, fill = "#5b8c5a", color = "white") +
+  labs(title = "Distribuição das notas", x = "Nota", y = "Frequência") +
+  theme_minimal()
+```
+
+---
+
+### 📦 Boxplot — "Resumo da distribuição numa caixinha"
+
+O boxplot é como um **resumo visual** da distribuição:
+
+```{r box1, exercise=TRUE}
+ggplot(turma, aes(x = curso, y = nota)) +
+  geom_boxplot(fill = "#e69f00") +
+  coord_flip() +
+  labs(
+    title = "Distribuição das notas por curso",
+    x     = "Curso",
+    y     = "Nota"
+  ) +
+  theme_minimal()
+```
+
+> 🗂️ **Como ler um boxplot:**
+> - A **linha do meio** = mediana (metade das notas estão acima, metade abaixo)
+> - A **caixa** = onde estão 50% dos estudantes
+> - Os **traços** = os valores mais extremos (sem os pontos fora do comum)
+> - Os **pontos soltos** = valores atípicos (bem diferentes dos outros)
+
+---
+
+### 🔍 Comparando grupos com cor
+
+```{r hist-grupo, exercise=TRUE}
+ggplot(turma, aes(x = nota, fill = habito)) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Distribuição das notas por hábito de estudo",
+    x     = "Nota",
+    y     = "Densidade",
+    fill  = "Hábito"
+  ) +
+  theme_minimal()
+```
+
+> 💡 `fill = habito` pede ao ggplot2 para **colorir** cada grupo diferente!
+
+---
+
+## 🧪 Parte 5 — Desafio Final
+
+Agora é com você! Use tudo que aprendeu para responder:
+
+> **"Estudantes que estudam com antecedência tiram notas maiores?"**
+
+### Passo 1 — Calcule a média por hábito
+
+```{r desafio1, exercise=TRUE}
+turma |>
+  group_by(habito) |>
+  summarise(media_nota = mean(nota))
+```
+
+### Passo 2 — Visualize com boxplot
+
+```{r desafio2, exercise=TRUE}
+ggplot(turma, aes(x = habito, y = nota, fill = habito)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "Notas por hábito de estudo",
+    x     = "Hábito de estudo",
+    y     = "Nota"
+  ) +
+  theme_minimal()
+```
+
+### Passo 3 — Responda!
+
+```{r quiz-final, echo=FALSE}
+question(
+  "Com base no gráfico, qual grupo parece ter as notas mais altas?",
+  answer("Véspera"),
+  answer("Misto"),
+  answer("Antecipado", correct = TRUE,
+         message = "Ótimo! Estudar com antecedência tende a estar associado a notas mais altas — mas lembre-se: associação não significa causa!"),
+  allow_retry = TRUE,
+  random_answer_order = TRUE
+)
+```
+
+---
+
+## 🏁 Resumo Final
+
+Você aprendeu hoje:
+
+| Ferramenta | O que aprendeu |
+|:-----------|:---------------|
+| `readr` | Abrir dados com `read_csv()` e inspecionar com `glimpse()` |
+| `dplyr` | Filtrar, contar, criar colunas e calcular médias por grupo |
+| `ggplot2` | Montar gráficos peça por peça com `+` |
+
+### As peças do quebra-cabeça do ggplot2
+
+```
+ggplot(dados, aes(x, y))  →  define os eixos
++ geom_bar()              →  barras (variáveis categóricas)
++ geom_histogram()        →  histograma (variáveis numéricas)
++ geom_boxplot()          →  boxplot (resumo da distribuição)
++ geom_density()          →  curva de densidade suavizada
++ labs(title, x, y)       →  títulos e rótulos
++ theme_minimal()         →  tema visual limpo
+```
+
+> 🎓 **Próximo passo:** experimente usar esses gráficos com dados reais da sua área!
+
+---
+
+*EST 100 — Estatística Descritiva e Exploratória | UFV*

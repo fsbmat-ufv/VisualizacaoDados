@@ -1,0 +1,121 @@
+estudante,curso,horas,habito,nota
+Estudante_1,Economia,4.2,Vespera,53.9
+Estudante_2,Economia,5.5,Vespera,72
+Estudante_3,Ciencia de Dados,6.7,Misto,75.4
+Estudante_4,Engenharia,10.1,Antecipado,77
+Estudante_5,Computacao,3.5,Vespera,46.8
+Estudante_6,Computacao,9.6,Vespera,84.8
+Estudante_7,Engenharia,5.9,Vespera,72.5
+Estudante_8,Ciencia de Dados,8.4,Antecipado,63.4
+Estudante_9,Engenharia,7.9,Misto,70.5
+Estudante_10,Engenharia,7.2,Misto,53.3
+Estudante_11,Computacao,3,Misto,49.2
+Estudante_12,Engenharia,4.8,Misto,62.1
+Estudante_13,Economia,6.8,Antecipado,50.8
+Estudante_14,Ciencia de Dados,3.1,Misto,62.2
+Estudante_15,Computacao,3.8,Antecipado,73.8
+Estudante_16,Economia,6.7,Antecipado,52.4
+Estudante_17,Economia,7.3,Misto,55.7
+Estudante_18,Ciencia de Dados,6.3,Misto,63
+Estudante_19,Computacao,3.2,Misto,50.2
+Estudante_20,Computacao,2.9,Antecipado,56.3
+Estudante_21,Economia,10.7,Vespera,73.5
+Estudante_22,Ciencia de Dados,5.7,Vespera,71.9
+Estudante_23,Economia,5.2,Misto,65.7
+Estudante_24,Economia,4.7,Misto,43
+Estudante_25,Ciencia de Dados,2.8,Vespera,59.5
+Estudante_26,Computacao,6.8,Antecipado,73.5
+Estudante_27,Ciencia de Dados,4.5,Misto,69.5
+Estudante_28,Economia,4.6,Antecipado,59.5
+Estudante_29,Computacao,8,Misto,36.5
+Estudante_30,Engenharia,7.5,Misto,63.8
+Estudante_31,Engenharia,10,Antecipado,70.2
+Estudante_32,Engenharia,3.9,Vespera,61.4
+Estudante_33,Ciencia de Dados,6.9,Vespera,64.5
+Estudante_34,Engenharia,10,Misto,68.8
+Estudante_35,Ciencia de Dados,2.9,Antecipado,56.1
+Estudante_36,Engenharia,3.3,Vespera,73.5
+Estudante_37,Ciencia de Dados,2.8,Antecipado,64.7
+Estudante_38,Ciencia de Dados,2.4,Antecipado,47.2
+Estudante_39,Economia,5.2,Vespera,75.7
+Estudante_40,Computacao,6.9,Misto,74.9
+Estudante_41,Ciencia de Dados,9.1,Misto,72.3
+Estudante_42,Computacao,8.4,Vespera,47.1
+Estudante_43,Ciencia de Dados,3,Vespera,54.5
+Estudante_44,Economia,12.6,Vespera,72
+Estudante_45,Computacao,3.6,Antecipado,61.1
+Estudante_46,Economia,5.3,Misto,65.4
+Estudante_47,Economia,4,Antecipado,85.6
+Estudante_48,Computacao,4.7,Misto,53.3
+Estudante_49,Economia,5.5,Misto,40.9
+Estudante_50,Computacao,5.3,Misto,64.6
+Estudante_51,Ciencia de Dados,4.9,Misto,54.8
+Estudante_52,Ciencia de Dados,5.3,Vespera,66.4
+Estudante_53,Ciencia de Dados,3.9,Misto,52.8
+Estudante_54,Engenharia,3.9,Antecipado,83
+Estudante_55,Ciencia de Dados,2.2,Misto,58.2
+Estudante_56,Engenharia,4.1,Misto,56.3
+Estudante_57,Engenharia,3.9,Misto,59.3
+Estudante_58,Ciencia de Dados,19.3,Antecipado,76.8
+Estudante_59,Ciencia de Dados,2.5,Vespera,60.7
+Estudante_60,Computacao,5.4,Misto,45.7
+Estudante_61,Engenharia,2.4,Misto,59.6
+Estudante_62,Economia,2.4,Vespera,67.3
+Estudante_63,Engenharia,5.3,Antecipado,62.3
+Estudante_64,Computacao,3,Antecipado,67.5
+Estudante_65,Engenharia,5,Vespera,60.2
+Estudante_66,Ciencia de Dados,4,Misto,60.4
+Estudante_67,Ciencia de Dados,3.7,Vespera,65.6
+Estudante_68,Engenharia,1.8,Misto,69
+Estudante_69,Engenharia,2.7,Vespera,47.5
+Estudante_70,Ciencia de Dados,5.5,Vespera,61.7
+Estudante_71,Ciencia de Dados,6.6,Vespera,62
+Estudante_72,Ciencia de Dados,3.9,Vespera,53.3
+Estudante_73,Ciencia de Dados,5,Vespera,51.4
+Estudante_74,Computacao,8.8,Misto,57.6
+Estudante_75,Ciencia de Dados,10.3,Antecipado,70.5
+Estudante_76,Engenharia,2.9,Misto,55.9
+Estudante_77,Ciencia de Dados,4.7,Vespera,53.7
+Estudante_78,Ciencia de Dados,9.1,Misto,65.7
+Estudante_79,Computacao,4,Misto,48.6
+Estudante_80,Ciencia de Dados,4.9,Vespera,72.1
+Estudante_81,Computacao,4.8,Vespera,56.7
+Estudante_82,Ciencia de Dados,3.2,Antecipado,62.3
+Estudante_83,Ciencia de Dados,4,Misto,61.5
+Estudante_84,Computacao,4.9,Antecipado,61.6
+Estudante_85,Engenharia,4.1,Misto,79.2
+Estudante_86,Computacao,8.7,Vespera,55.6
+Estudante_87,Ciencia de Dados,3.9,Misto,72.4
+Estudante_88,Ciencia de Dados,4,Antecipado,61.3
+Estudante_89,Ciencia de Dados,7.1,Vespera,54.6
+Estudante_90,Ciencia de Dados,2.9,Misto,59.4
+Estudante_91,Engenharia,4.9,Vespera,69.1
+Estudante_92,Ciencia de Dados,2.3,Misto,55.3
+Estudante_93,Ciencia de Dados,9,Vespera,56.3
+Estudante_94,Economia,4.4,Vespera,62.8
+Estudante_95,Economia,4,Vespera,70.9
+Estudante_96,Engenharia,2.7,Misto,59.2
+Estudante_97,Ciencia de Dados,5,Misto,47.8
+Estudante_98,Computacao,3.4,Vespera,47.5
+Estudante_99,Engenharia,3.8,Antecipado,53.2
+Estudante_100,Computacao,9.5,Antecipado,59
+Estudante_101,Computacao,4.6,Misto,61.2
+Estudante_102,Ciencia de Dados,2.9,Misto,66.8
+Estudante_103,Ciencia de Dados,5.4,Antecipado,57.6
+Estudante_104,Ciencia de Dados,4.2,Misto,50
+Estudante_105,Economia,6.7,Misto,68.8
+Estudante_106,Economia,10.2,Vespera,67.3
+Estudante_107,Engenharia,3,Misto,71.8
+Estudante_108,Engenharia,6.3,Misto,45.7
+Estudante_109,Computacao,5.2,Misto,62.7
+Estudante_110,Ciencia de Dados,7.8,Antecipado,76.9
+Estudante_111,Computacao,4.5,Misto,68.6
+Estudante_112,Engenharia,7.6,Misto,54.9
+Estudante_113,Engenharia,2.1,Antecipado,66.7
+Estudante_114,Computacao,11.6,Antecipado,56.5
+Estudante_115,Computacao,7.7,Vespera,58.8
+Estudante_116,Computacao,4.6,Vespera,73.3
+Estudante_117,Ciencia de Dados,2.4,Vespera,56.7
+Estudante_118,Ciencia de Dados,6.9,Antecipado,71.2
+Estudante_119,Computacao,6.4,Misto,59.7
+Estudante_120,Engenharia,5,Antecipado,45.9
