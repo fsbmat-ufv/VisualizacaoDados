@@ -32,11 +32,11 @@ install.packages(c("learnr", "tidyverse", "readxl", "scales", "shiny", "rmarkdow
 Abra **`VisualizacaoDados.Rproj`** (duplo clique) — isso inicia o RStudio já com o
 diretório de trabalho correto, que é o que faz os caminhos `dados/...` funcionarem.
 
-Em seguida abra `EST100_minicurso_visualizacao_dados.Rmd` e clique em
+Em seguida abra `MinicursoVisualizacaoDados.Rmd` e clique em
 **Run Document**, ou execute no console:
 
 ```r
-rmarkdown::run("EST100_minicurso_visualizacao_dados.Rmd")
+rmarkdown::run("MinicursoVisualizacaoDados.Rmd")
 ```
 
 O tutorial abre no navegador. Não é preciso conhecimento prévio de R.
@@ -81,15 +81,12 @@ mínimos), `idade_anos`, `idade_meses`, `idade`, `procedencia`.
 
 ```
 VisualizacaoDados/
-├── VisualizacaoDados.Rproj                   <- abra este arquivo primeiro
-├── EST100_minicurso_visualizacao_dados.Rmd   <- tutorial do minicurso
-├── EST100_learnR_intro.Rmd                   <- tutorial introdutório (aula anterior)
-├── EST100_pratica_visualizacao_graficos_R_corrigido.Rmd
-├── GraficosMatematicos.Rmd                   <- funções e gráficos em R base
-├── aula_git_github_rstudio_beamer.tex        <- slides sobre Git/GitHub/RStudio
-├── CompanhiaMB_clear2.xls                    <- planilha original
-├── dados/                                    <- arquivos exportados (CSV e TXT)
-├── Logo.png, UFV.png, Logo100.png            <- logos institucionais
+├── VisualizacaoDados.Rproj          <- abra este arquivo primeiro
+├── MinicursoVisualizacaoDados.Rmd   <- o tutorial do minicurso
+├── CompanhiaMB_clear2.xls           <- planilha original dos dados
+├── dados/                           <- arquivos exportados (CSV e TXT)
+├── Logo.png, UFV.png, Logo100.png   <- logos institucionais
+├── README.md
 └── .gitignore
 ```
 
