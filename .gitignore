@@ -4,12 +4,15 @@
 # ------------------------------------------------------------------
 
 # --- R e RStudio ---
+# Atencao: o arquivo .Rproj NAO entra aqui - ele deve ser versionado, para que
+# todo mundo que clonar o repositorio abra o projeto com as mesmas opcoes
+# (em especial Encoding: UTF-8). O que se ignora e a pasta .Rproj.user/,
+# que guarda o estado individual de cada usuario.
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 .Rapp.history
-*.Rproj
 
 # --- Saidas geradas automaticamente pelo knitr/rmarkdown/learnr ---
 *_cache/

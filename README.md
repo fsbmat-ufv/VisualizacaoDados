@@ -29,7 +29,10 @@ Instale os pacotes necessários (uma vez só):
 install.packages(c("learnr", "tidyverse", "readxl", "scales", "shiny", "rmarkdown"))
 ```
 
-Abra o arquivo `EST100_minicurso_visualizacao_dados.Rmd` no RStudio e clique em
+Abra **`VisualizacaoDados.Rproj`** (duplo clique) — isso inicia o RStudio já com o
+diretório de trabalho correto, que é o que faz os caminhos `dados/...` funcionarem.
+
+Em seguida abra `EST100_minicurso_visualizacao_dados.Rmd` e clique em
 **Run Document**, ou execute no console:
 
 ```r
@@ -78,6 +81,7 @@ mínimos), `idade_anos`, `idade_meses`, `idade`, `procedencia`.
 
 ```
 VisualizacaoDados/
+├── VisualizacaoDados.Rproj                   <- abra este arquivo primeiro
 ├── EST100_minicurso_visualizacao_dados.Rmd   <- tutorial do minicurso
 ├── EST100_learnR_intro.Rmd                   <- tutorial introdutório (aula anterior)
 ├── EST100_pratica_visualizacao_graficos_R_corrigido.Rmd

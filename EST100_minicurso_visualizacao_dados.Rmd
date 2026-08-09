@@ -2419,7 +2419,6 @@ nesta pasta:
 .Rhistory
 .RData
 .Ruserdata
-*.Rproj
 
 # --- Saidas geradas automaticamente ---
 *_cache/
@@ -2432,6 +2431,18 @@ figuras/
 Thumbs.db
 ~$*
 ```
+
+<div class="caixa atencao">
+<b>Repare no que <i>não</i> está na lista: o arquivo <code>.Rproj</code>.</b><br>
+É uma confusão comum. Duas coisas parecidas, destinos opostos:
+<ul>
+<li><code>VisualizacaoDados.Rproj</code> — o arquivo de projeto, com as opções de
+trabalho (codificação UTF-8, indentação, etc.). <b>Deve ser versionado</b>, para
+que quem clonar o repositório abra o projeto exatamente como você;</li>
+<li><code>.Rproj.user/</code> — pasta de estado individual (quais arquivos você
+deixou abertos, posição do cursor). <b>Deve ser ignorada</b>: é sua, não do projeto.</li>
+</ul>
+</div>
 
 <div class="caixa atencao">
 <b>Nunca versione</b> senhas, tokens, chaves de API, CPF ou qualquer dado pessoal
