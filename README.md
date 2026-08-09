@@ -17,6 +17,12 @@ Descritiva.
 
 ## 🚀 Como executar o tutorial
 
+Baixe o material:
+
+```bash
+git clone https://github.com/fsbmat-ufv/VisualizacaoDados.git
+```
+
 Instale os pacotes necessários (uma vez só):
 
 ```r

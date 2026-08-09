@@ -2472,6 +2472,16 @@ sempre: você cria o repositório no site (botão <b>New repository</b>) e depoi
 conecta a pasta local a ele.
 </div>
 
+<div class="caixa destaque">
+<b>Resultado.</b> O material deste minicurso está publicado em:<br>
+<a href="https://github.com/fsbmat-ufv/VisualizacaoDados">github.com/fsbmat-ufv/VisualizacaoDados</a><br><br>
+Para baixar tudo no seu computador, um comando basta:
+</div>
+
+```bash
+git clone https://github.com/fsbmat-ufv/VisualizacaoDados.git
+```
+
 ### 🖱️ O mesmo fluxo pelo RStudio (sem terminal)
 
 <div class="caixa neutro">
