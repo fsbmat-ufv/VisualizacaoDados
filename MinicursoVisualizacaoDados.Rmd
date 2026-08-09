@@ -468,12 +468,6 @@ library(tidyverse)
 tidyverse_packages()
 ```
 
-<div class="caixa professor">
-<b>Nota ao professor.</b> Em turmas iniciantes, vale abrir o minicurso mostrando
-o caminho completo <i>planilha → arquivo de texto → tabela no R → gráfico</i>.
-Muitos estudantes travam não no gráfico, mas na importação. Por isso este
-tutorial começa exatamente por ali.
-</div>
 
 ## 📂 Importando dados: CSV e TXT
 
@@ -1374,8 +1368,7 @@ ggplot(companhia, aes(x = grau, y = salario)) +
 ```
 
 <div class="caixa professor">
-<b>Nota ao professor.</b> Este é um bom momento para discutir tamanho de amostra
-em sala. Peça que os estudantes contem os pontos do grupo <code>superior</code>. A
+<b>Observação.</b> Este é um bom momento para discutir tamanho de amostra. Peça que os estudantes contem os pontos do grupo <code>superior</code>. A
 percepção de que "a caixa parecia sólida, mas são poucos casos" costuma ser um
 divisor de águas na leitura crítica de gráficos.
 </div>
@@ -1606,10 +1599,7 @@ formas |>
 ```
 
 <div class="caixa dica">
-Repare como o coeficiente de assimetria acompanha o desenho: perto de <b>0</b> na
-simétrica, claramente <b>positivo</b> na assimétrica à direita. Na cauda longa, a
-média e a mediana quase coincidem, mas o <b>desvio padrão explode</b> — sinal de
-que poucos valores extremos dominam a medida.
+Repare como o coeficiente de assimetria acompanha o formato da distribuição: é próximo de zero na aproximadamente simétrica e claramente positivo na assimétrica à direita. Na distribuição de cauda longa, média e mediana permanecem muito próximas, mostrando que a presença de caudas mais pesadas não implica necessariamente grande diferença entre essas duas medidas. Além disso, embora o desvio padrão seja sensível a valores extremos, neste exemplo ele não é maior que nas demais distribuições.
 </div>
 
 ### 📐 Medidas de dispersão
@@ -2625,15 +2615,6 @@ tabela de frequências → gráfico → <b>interpretação</b> → repositório 
 <li>Estude gráficos interativos com <code>plotly</code> e relatórios com <code>Quarto</code>;</li>
 <li>Publique seu material no GitHub e compartilhe o link com a turma.</li>
 </ul>
-</div>
-
-<div class="caixa professor">
-<b>Nota ao professor.</b> Para adaptar este tutorial a outra turma, basta trocar
-o arquivo em <code>dados/</code> e ajustar os nomes das variáveis no bloco
-<code>setup</code>. Toda a estrutura de exercícios e quizzes permanece funcionando.
-Uma sugestão de sequência em 3 horas: importação (30 min), organização (20 min),
-frequências e histogramas (40 min), boxplots e descrição (40 min), ggplot2 (30
-min), Git/GitHub (20 min).
 </div>
 
 ### 📚 Para ir além
